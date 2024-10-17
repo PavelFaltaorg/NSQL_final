@@ -29,3 +29,8 @@ Nějaký nápady co se mi líbí co mi vyhodilo gpt:
      - MongoDB for storing user profiles, questions, and game results
      - Leaderboard to display top players or winners
      - Live chat functionality for players in the same game room
+
+### 5. **E-Shop (jakýhokoliv druhu)**
+
+### 6. **Aplikace se sportovnímy výsledky**
+   - **Description**: inspirace: www.vysledky.com

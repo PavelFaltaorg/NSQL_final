@@ -1,4 +1,4 @@
-# Multiplayer Game Backend
+# Multiplayer Game Backend + Front
 
 Repo for a multiplayer game featuring a server-client architecture using arcade, FastAPI and WebSockets. The game uses protocol buffers (`game.proto`) for serializing player inputs and synchronizing game state.
 ## Features

@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package game;
+
+// Message representing a color as a tuple of 3 integers
+message Color {
+    int32 r = 1;
+    int32 g = 2;
+    int32 b = 3;
+}
+
+message ServerMessage {
+    int32 type = 1;
+    string header = 2;
+    string content = 3;
+    Color color = 4;
+}
+// Message representing player input
+message PlayerInput {
+    string player_id = 1;
+    float direction_x = 2;
+    float direction_y = 3;
+    bool shoot = 4;
+    float target_position_x = 5;
+    float target_position_y = 6;
+    string name = 7;
+    Color color = 8;
+    bool respawn = 9;
+    string message = 10;
+}
+
+// Message representing a player in the game state
+message Player {
+    string id = 1;
+    float x = 2;
+    float y = 3;
+    float hp = 4;
+    string last_hit = 5;
+    float vx = 6;  // Velocity in the x direction
+    float vy = 7;  // Velocity in the y direction
+    string name = 8;
+    float max_hp = 9;
+    Color color = 10;
+}
+
+// Message representing a bullet in the game state
+message Bullet {
+    int32 id = 1;
+    float x = 2;
+    float y = 3;
+    float vx = 4;  // Velocity in the x direction
+    float vy = 5;  // Velocity in the y direction
+}
+
+// Message representing a leaderboard entry
+message LeaderboardEntry {
+    Color color = 1;
+    string name = 2;
+    int32 points = 3;
+}
+
+// Overall game state message
+message GameState {
+    repeated Player players = 1;
+    repeated Bullet bullets = 2;
+    int32 map_size = 3;
+    int64 timestamp = 4;
+    int32 server_fps = 5;
+    repeated LeaderboardEntry leaderboard = 6;  // Add leaderboard field
+    ServerMessage message = 7;
+}

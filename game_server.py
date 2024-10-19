@@ -126,7 +126,7 @@ class Game:
         self.leaderboard = Leaderboard()  # Initialize Leaderboard
         self.message_buffer = deque()
 
-    def add_player(self, player_input: int, addr: Tuple[str, int]):
+    def add_player(self, player_input: int, addr: Tuple[str, int]): # in the future change to load player data from mongodb
         body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 20))
         body.position = 0, 0
         shape = pymunk.Circle(body, 20)
@@ -470,7 +470,7 @@ async def startup_event():
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
-    pid = redis_access.get(session_id)
+    pid = redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
     if pid:
         pid = pid.decode('utf-8')
         game_server = app.state.game_server

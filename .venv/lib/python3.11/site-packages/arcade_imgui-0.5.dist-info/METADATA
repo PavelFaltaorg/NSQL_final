@@ -1,0 +1,66 @@
+Metadata-Version: 2.1
+Name: arcade-imgui
+Version: 0.5
+Summary: IMGUI integration for Python Arcade
+Home-page: https://github.com/kfields/arcade-imgui
+License: MIT
+Keywords: arcade,game,gui
+Author: Kurtis Fields
+Author-email: kurtisfields@gmail.com
+Requires-Python: >=3.8,<3.12
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Games/Entertainment :: Arcade
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: User Interfaces
+Requires-Dist: arcade (>=2.6,<2.8)
+Requires-Dist: imgui (>=1.4.1,<2.0.0)
+Project-URL: Documentation, https://github.com/kfields/arcade-imgui
+Project-URL: Repository, https://github.com/kfields/arcade-imgui
+Description-Content-Type: text/markdown
+
+# Arcade ImGui
+
+[The Python Arcade Library](https://arcade.academy/) + [pyimgui](https://github.com/swistakm/pyimgui) = :heart:
+
+:package: [Package](https://pypi.org/project/arcade-imgui/)
+
+## Prerequisite
+
+Get [Poetry](https://python-poetry.org/)
+
+## Clone
+
+```bash
+git clone https://github.com/kfields/arcade-imgui.git
+cd arcade-imgui
+poetry shell
+poetry install
+```
+
+## Run an example
+```bash
+cd examples
+python basic.py
+```
+
+## Run the Demo
+```bash
+cd imdemo
+poetry install
+python imdemo
+```
+
+## Run the ImFlo Demo
+```bash
+cd imflo
+poetry install
+python imflo
+```

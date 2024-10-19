@@ -1,49 +1,36 @@
-# Multiplayer Game Backend + Front
+# Multiplayerová Hra - Redis a Mongo, FastAPI + Flask?
 
-Repo for a multiplayer game featuring a server-client architecture using arcade, FastAPI and WebSockets. The game uses protocol buffers (`game.proto`) for serializing player inputs and synchronizing game state.
-## Features
+## Instalace
 
-- **FastAPI Server:** Handles player connections and broadcasts game state updates.
-- **WebSocket Client:** Uses arcade for rendering, connects to the FastAPI server to receive updates and send player input.
-- **Protocol Buffers:** Used for efficient serialization of game data (`game.proto`).
+1. **Verze Pythonu**: 3.11. (testovano na 3.11.2)
+   
+2. **Virtuální prostředí**:
+   - virtuální prostředí a nainstaluj potřebné závislosti:
+     ```bash
+     pip install -r requirements.txt
+     ```
 
-## Requirements
+3. **Nastavení Redis**:
+   - konfiguračního soubor `redis.conf`
 
-- Python 3.11 (tested on 3.11.2)
+## Co už máme hotové
 
-## Setup Instructions
+- **Herní server**: Plně funkční server pro multiplayerovou hru, který zvládá všechny základní operace.
+- **Arcade klient**: Herní klient, který se dokáže připojit k serveru.
+- **Správa relací (sessions)**: Každá herní relace je ověřována pomocí Redis databáze.
+  - Redis ukládá relace ve formátu: `"user_session_id": "player_id"`, což zajišťuje rychlou a efektivní správu připojení hráčů.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/multiplayer-game-backend.git
-   cd multiplayer-game-backend
-   ```
+## Co je ještě potřeba udělat
 
-2. **Create and activate a virtual environment:**
-   ```bash
-   python3.11 -m venv venv
-   source venv/bin/activate  # On Windows, use 'venv\Scripts\activate'
-   ```
+- **Integrace MongoDB**:
+  - Ukládat data hráčů do MongoDB ve formátu: `"player_id": player_data`.
+  - Při připojení hráče automaticky načíst jeho data z MongoDB.
+  - Implementovat periodické zálohování dat z paměti do MongoDB, aby nedocházelo ke ztrátě dat.
 
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the server:**
-   ```bash
-   python server.py
-   ```
-
-5. **Run the client:**
-   ```bash
-   python client.py
-   ```
-
-## Game Protocol
-
-The game uses a protocol buffer defined in `game.proto` for encoding player inputs and server responses. You can regenerate the Python code for the protobuf using:
-
-```bash
-protoc --python_out=. game.proto
-```
+- **Uživatelský klient**:
+  - Vytvořit samostatný klient, který by umožnil hráčům spravovat své účty mimo hru. Plánujeme, že tento klient umožní:
+    - Autorizace jmeno:heslo.  
+    - Kupovat upgrady.
+    - Spravovat seznam přátel.
+    - Marketplace??
+    - atd atd idk 

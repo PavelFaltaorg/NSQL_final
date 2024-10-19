@@ -32,7 +32,7 @@ class Entity:
         self.shape = arcade.SpriteCircle(self.get_radius(), self.get_initial_color())
         self.shape.visible = False
         self.shape.position = (entity_data.x, entity_data.y)
-        self.shape.player_id = entity_data.id
+        self.shape.session_id = entity_data.id
         self.positions_buffer = deque(maxlen=30)
         self.velocity = pymunk.Vec2d(entity_data.vx, entity_data.vy)
         self.position_at_receive = pymunk.Vec2d(0, 0)
@@ -302,13 +302,13 @@ class ChatWindow:
             self.new_chat_message = message.message
 
 class Minimap:
-    def __init__(self, width, height, player_id):
+    def __init__(self, width, height, session_id):
         self.width = width
         self.height = height
         self.texture_id = gl.glGenTextures(1)
         self.image = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         self.draw = ImageDraw.Draw(self.image)
-        self.player_id = player_id
+        self.session_id = session_id
 
     def scale_coordinates(self, x, y, map_width, map_height):
         scale_x = self.width / map_width
@@ -326,7 +326,7 @@ class Minimap:
 
         for player in player_list:
             scaled_x, scaled_y = self.scale_coordinates(player.center_x, player.center_y, map_size, map_size)
-            if player.player_id == self.player_id:
+            if player.session_id == self.session_id:
                 self.draw.chord((scaled_x - 2, scaled_y - 2, scaled_x + 2, scaled_y + 2), 0, 360, fill=(0, 0, 0), outline=player.color)
             else:
                 self.draw.ellipse((scaled_x - 2, scaled_y - 2, scaled_x + 2, scaled_y + 2), fill=player.color)
@@ -367,7 +367,7 @@ class GUI:
 
             imgui.push_style_color(imgui.COLOR_WINDOW_BACKGROUND, 0, 0, 0, 0.5)
 
-            if self.game.players.get(self.game.player_id) and self.game.players.get(self.game.player_id).hp <= 0:
+            if self.game.players.get(self.game.session_id) and self.game.players.get(self.game.session_id).hp <= 0:
                 imgui.set_next_window_collapsed(False)
                 imgui.begin("Respawn", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE | imgui.WINDOW_NO_TITLE_BAR)
                 if imgui.button("Respawn", width=130, height=65):
@@ -379,7 +379,7 @@ class GUI:
             minimap_pos = imgui.get_cursor_screen_pos()
 
             imgui.image(self.game.minimap.texture_id, self.game.minimap.width, self.game.minimap.height, uv0=(0, 1), uv1=(1, 0))
-            player = self.game.players.get(self.game.player_id)
+            player = self.game.players.get(self.game.session_id)
 
             if player:
                 position = player.shape.position  # Assuming player has a position attribute

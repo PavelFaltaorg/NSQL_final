@@ -20,19 +20,6 @@ import imgui
 from coolname import generate
 from client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
 import random
-
-# Configuration Constants
-SERVER_ADDRESS = ('localhost', 12345)
-SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
-FPS = 60  # 60 FPS for game updates and rendering
-SCREEN = pymunk.Vec2d(1000, 1000)
-
-MINIMAP_WIDTH = 250
-MINIMAP_HEIGHT = 250
-
-def rcg():
-    return (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
-
 import asyncio
 import websockets
 import game_pb2  # Assuming you have the compiled game_pb2 file
@@ -40,10 +27,24 @@ import zstandard as zstd
 from collections import deque
 from time import time_ns
 
+# Configuration Constants
+SERVER_ADDRESS = ('localhost', 12345)
+SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
+FPS = 60  # 60 FPS for game updates and rendering
+SCREEN = pymunk.Vec2d(1000, 1000)
+
+SESSION_ID = "user321"
+
+MINIMAP_WIDTH = 250
+MINIMAP_HEIGHT = 250
+
+def rcg():
+    return (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
+
 class NetworkManager:
     def __init__(self, game):
         self.game = game
-        self.uri = f"ws://localhost:8000/ws/{self.game.player_id}"  # WebSocket URL
+        self.uri = f"ws://localhost:8000/ws/{SESSION_ID}"  # WebSocket URL
         self.cctx = zstd.ZstdDecompressor()
         self.running = True
         self.server_fps = 1
@@ -58,10 +59,12 @@ class NetworkManager:
                 async with websockets.connect(self.uri) as websocket:
                     print(f"Connection established with server at {self.uri}")
                     await asyncio.gather(self.send_input(websocket), self.receive_game_state(websocket))
+                await asyncio.sleep(5)
             except Exception as e:
                 print(f"Server cannot be reached, another attempt in 5 seconds...")
                 self.ping_deque.append(9999)
                 await asyncio.sleep(5)
+                
 
     async def send_input(self, websocket):
         while self.running:
@@ -76,7 +79,7 @@ class NetworkManager:
                 await websocket.send(input_state.SerializeToString())
                 input_state.respawn = False
             except websockets.ConnectionClosed:
-                print("Connection closed while sending input.")
+                #print("Connection closed while sending input.")
                 break
             except Exception as e:
                 print(f"Error sending input: {e}")
@@ -112,8 +115,8 @@ class NetworkManager:
                     self.server_fps = new_game_state.server_fps
                     # Update timeout as needed, depending on your server's FPS
 
-            except websockets.ConnectionClosed:
-                print("Game State no longer being received.")
+            except websockets.ConnectionClosed as e:
+                print(f"Game State not received: {e.reason}")
                 self.connection_lost = True
                 break
             except Exception as e:
@@ -145,8 +148,8 @@ class MyGame(arcade.Window):
 
         self.input_state = game_pb2.PlayerInput()
 
-        self.player_id = str(uuid.uuid4())
-        self.input_state.player_id = self.player_id
+        self.session_id = SESSION_ID
+        self.input_state.session_id = self.session_id
         self.input_state.name = ' '.join(x.capitalize() for x in generate(2))
 
         player_color = rcg()
@@ -166,7 +169,7 @@ class MyGame(arcade.Window):
 
         self.initial_connection_made = False
 
-        self.minimap = Minimap(MINIMAP_WIDTH, MINIMAP_HEIGHT, self.player_id)
+        self.minimap = Minimap(MINIMAP_WIDTH, MINIMAP_HEIGHT, self.session_id)
 
         self.chat = ChatWindow()
 
@@ -329,10 +332,10 @@ class MyGame(arcade.Window):
                 entity.update(e)
 
         # Update health bars and text sprites
-        for player_id, player in self.players.items():
-            health_bar_background = next((hb for hb in self.health_bar_backgrounds if hb.player_id == player_id), None)
-            health_bar = next((hb for hb in self.health_bars if hb.player_id == player_id), None)
-            text_sprite = next((ts for ts in self.text_sprite_list if ts.player_id == player_id), None)
+        for session_id, player in self.players.items():
+            health_bar_background = next((hb for hb in self.health_bar_backgrounds if hb.session_id == session_id), None)
+            health_bar = next((hb for hb in self.health_bars if hb.session_id == session_id), None)
+            text_sprite = next((ts for ts in self.text_sprite_list if ts.session_id == session_id), None)
 
             if player and player.hp > 0:
                 if health_bar_background and not health_bar_background.visible:
@@ -367,13 +370,13 @@ class MyGame(arcade.Window):
                 if text_sprite:
                     text_sprite.visible = False
 
-    def remove_health_bar(self, player_id):
+    def remove_health_bar(self, session_id):
         for health_bar in self.health_bars:
-            if health_bar.player_id == player_id:
+            if health_bar.session_id == session_id:
                 self.health_bars.remove(health_bar)
                 break
         for health_bar_background in self.health_bar_backgrounds:
-            if health_bar_background.player_id == player_id:
+            if health_bar_background.session_id == session_id:
                 self.health_bar_backgrounds.remove(health_bar_background)
                 break
 
@@ -401,38 +404,38 @@ class MyGame(arcade.Window):
             
         return entity
 
-    def add_text_sprite(self, player_id, player):
+    def add_text_sprite(self, session_id, player):
         name_x = player.shape.center_x
         name_y = player.shape.center_y + 50  # Adjust this value as needed
         text_sprite = arcade.create_text_sprite(
             player.name,  # Assuming each player object has a 'name' attribute
             name_x,
             name_y,
-            arcade.color.BLACK if player_id == self.player_id else arcade.color.RED,
+            arcade.color.BLACK if session_id == self.session_id else arcade.color.RED,
             14,  # Font size
             anchor_x="center",
             bold=True
         )
-        text_sprite.player_id = player_id  # Attach player_id to the text sprite
+        text_sprite.session_id = session_id  # Attach session_id to the text sprite
         self.text_sprite_list.append(text_sprite)
 
-    def add_health_bar(self, player_id, player):
+    def add_health_bar(self, session_id, player):
         health_bar = arcade.SpriteSolidColor(60, 10, arcade.color.WHITE)
         background = arcade.SpriteSolidColor(62, 12, arcade.color.BLACK)
         background.center_x = player.shape.center_x-1
         background.center_y = player.shape.center_y + 29
-        background.player_id = player_id
+        background.session_id = session_id
 
         health_bar.center_x = player.shape.center_x
         health_bar.center_y = player.shape.center_y + 30
-        health_bar.player_id = player_id
+        health_bar.session_id = session_id
 
         self.health_bars.append(health_bar)
         self.health_bar_backgrounds.append(background)
 
-    def remove_text_sprite(self, player_id):
+    def remove_text_sprite(self, session_id):
         for text_sprite in self.text_sprite_list:
-            if text_sprite.player_id == player_id:
+            if text_sprite.session_id == session_id:
                 self.text_sprite_list.remove(text_sprite)
                 break
 
@@ -451,9 +454,9 @@ class MyGame(arcade.Window):
         entity.position_at_receive = pymunk.Vec2d(entity.shape.position[0], entity.shape.position[1])
 
     def update_camera(self):
-        if self.player_id in self.players:
-            my_player = self.players[self.player_id]
-            other_players = {id: player for id, player in self.players.items() if id != self.player_id and player.hp > 0}
+        if self.session_id in self.players:
+            my_player = self.players[self.session_id]
+            other_players = {id: player for id, player in self.players.items() if id != self.session_id and player.hp > 0}
 
             if my_player.hp > 0:
                 fltr = [Vec2d(player.shape.position[0], player.shape.position[1])

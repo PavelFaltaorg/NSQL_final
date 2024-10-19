@@ -17,7 +17,7 @@ message ServerMessage {
 }
 // Message representing player input
 message PlayerInput {
-    string player_id = 1;
+    string session_id = 1;
     float direction_x = 2;
     float direction_y = 3;
     bool shoot = 4;

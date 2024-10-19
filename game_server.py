@@ -65,52 +65,52 @@ class Leaderboard:
         self.scores = {}
         self.lock = threading.Lock()
 
-    def add_points(self, player_id, points=0, reset=False):
+    def add_points(self, session_id, points=0, reset=False):
         with self.lock:
-            if player_id not in self.scores:
-                self.scores[player_id] = {"color": (0,0,0), "name": "", "points": 0}
+            if session_id not in self.scores:
+                self.scores[session_id] = {"color": (0,0,0), "name": "", "points": 0}
             if reset:
-                self.scores[player_id]["points"] = 0
+                self.scores[session_id]["points"] = 0
             else:
-                self.scores[player_id]["points"] += points
+                self.scores[session_id]["points"] += points
     
     def update(self, players):
         with self.lock:
-            for player_id, player_data in self.scores.items():
-                if player_id in self.scores:
-                    player_data["color"] = players[player_id].color
-                    player_data["name"] = players[player_id].name
+            for session_id, player_data in self.scores.items():
+                if session_id in self.scores:
+                    player_data["color"] = players[session_id].color
+                    player_data["name"] = players[session_id].name
 
     def create_new(self, player):
-        player_id = player.player_id
+        session_id = player.session_id
         player_name = player.name
         player_color = player.color
 
-        self.scores[player_id] = {
+        self.scores[session_id] = {
             "color": player_color,
             "name": player_name,
             "points": 0
         }
 
-    def remove_player(self, player_id):
+    def remove_player(self, session_id):
         with self.lock:
-            if player_id in self.scores:
-                self.scores.pop(player_id)
+            if session_id in self.scores:
+                self.scores.pop(session_id)
 
-    def serialize(self, current_player_id):
+    def serialize(self, current_session_id):
         n = 5
         with self.lock:
             sorted_scores = sorted(self.scores.items(), key=lambda item: item[1]["points"], reverse=True)
             top_n = sorted_scores[:n]
     
             # Check if the current player is in the top N
-            current_player_in_top_n = any(player_id == current_player_id for player_id, _ in top_n)
+            current_player_in_top_n = any(session_id == current_session_id for session_id, _ in top_n)
     
-            if not current_player_in_top_n and current_player_id in self.scores:
-                current_player_score = self.scores[current_player_id]
-                top_n.append((current_player_id, current_player_score))
+            if not current_player_in_top_n and current_session_id in self.scores:
+                current_player_score = self.scores[current_session_id]
+                top_n.append((current_session_id, current_player_score))
     
-            return [{"color": player_data["color"], "name": player_data["name"], "points": player_data["points"]} for player_id, player_data in top_n]
+            return [{"color": player_data["color"], "name": player_data["name"], "points": player_data["points"]} for session_id, player_data in top_n]
 
 class Game:
     def __init__(self):
@@ -133,9 +133,9 @@ class Game:
         shape.collision_type = PLAYER_COLLISION_TYPE
         self.space.add(body, shape)
         self.leaderboard.create_new(player_input)
-        self.id_mask_map[player_input.player_id] = str(uuid4())
+        self.id_mask_map[player_input.session_id] = str(uuid4())
 
-        self.players[player_input.player_id] = Player(
+        self.players[player_input.session_id] = Player(
             body=body,
             shape=shape,
             direction=Vec2d(0, 0),
@@ -153,8 +153,8 @@ class Game:
         )
         self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{player_input.name} Joined."))
 
-    def respawn_player(self, player_id):
-        player = self.players.get(player_id)
+    def respawn_player(self, session_id):
+        player = self.players.get(session_id)
         if player:
             player.body.position = 0, 0
             player.body.velocity = 0, 0
@@ -163,27 +163,27 @@ class Game:
             player.last_hit = None
             player.strikes = 0
             player.invincible = True
-            self.leaderboard.add_points(player_id, reset=True)
+            self.leaderboard.add_points(session_id, reset=True)
 
-    def remove_player(self, player_id: int):
-        player = self.players.pop(player_id, None)
+    def remove_player(self, session_id: int):
+        player = self.players.pop(session_id, None)
         if player:
             self.space.remove(player.body, player.shape)
-            self.leaderboard.remove_player(player_id)
+            self.leaderboard.remove_player(session_id)
             self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{player.name} Disconnected."))
-            print(f"Player {player_id} removed from the game.")
+            print(f"Player {session_id} removed from the game.")
 
-    def process_input(self, data: bytes, addr: Tuple[str, int]):
+    def process_input(self, data: bytes, addr: Tuple[str, int], session_id: str):
         player_input = self.deserialize_input(data)
-        player_id = player_input.player_id
+        player_input.session_id = session_id
         if player_input.message:
             self.message_buffer.append(game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
 
         with self.lock:
-            if player_id not in self.players:
+            if session_id not in self.players:
                 self.add_player(player_input, addr)
             else:
-                player = self.players[player_id]
+                player = self.players[session_id]
                 player.addr = addr
                 player.last_update = time.time()
                 player.strikes = 0
@@ -191,7 +191,7 @@ class Game:
             self.update_player_state(player_input)
 
     def update_player_state(self, player_input):
-        player = self.players.get(player_input.player_id)
+        player = self.players.get(player_input.session_id)
         if player:
             if not player.dead:
                 player.color = player_input.color
@@ -204,10 +204,10 @@ class Game:
             else:
                 player.color = game_pb2.Color(r=0, g=0, b=0)
                 if player_input.respawn:
-                    self.respawn_player(player_input.player_id)
+                    self.respawn_player(player_input.session_id)
 
     def add_bullet(self, player_input):
-        player = self.players.get(player_input.player_id)
+        player = self.players.get(player_input.session_id)
         if player:
             bullet_body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 5))
             bullet_body.position = player.body.position
@@ -243,7 +243,7 @@ class Game:
             self.bullets[bullet_id] = Bullet(
                 body=bullet_body,
                 shape=bullet_shape,
-                owner_id=player_input.player_id,
+                owner_id=player_input.session_id,
                 damage=5,
                 positions=deque([bullet_body.position], maxlen=2)
             )
@@ -281,10 +281,10 @@ class Game:
                         hit_shape = raycast_info.shape
                         if hit_shape.collision_type == PLAYER_COLLISION_TYPE:
 
-                            player_id = next(pid for pid, p in self.players.items() if p.shape == hit_shape)
-                            player = self.players[player_id]
+                            session_id = next(pid for pid, p in self.players.items() if p.shape == hit_shape)
+                            player = self.players[session_id]
 
-                            if bullet.owner_id != player_id and player.hp > 0:
+                            if bullet.owner_id != session_id and player.hp > 0:
                                 self.deal_dmg(player, bullet.owner_id, bullet.damage)
                                 self.remove_bullet(bullet_id)
 
@@ -301,7 +301,7 @@ class Game:
             if self.message_buffer:
                 chat_message = self.message_buffer.popleft()
                 send_message = True
-            for player_id in self.players.keys():
+            for session_id in self.players.keys():
                 game_state = game_pb2.GameState()
                 if send_message:
                     game_state.message.CopyFrom(chat_message)
@@ -309,21 +309,21 @@ class Game:
                 game_state.timestamp = time.time_ns()
                 game_state.server_fps = SEND_INTERVAL
 
-                leaderboard_entries = self.leaderboard.serialize(player_id)  # Top 10 players + current player
+                leaderboard_entries = self.leaderboard.serialize(session_id)  # Top 10 players + current player
                 for entry in leaderboard_entries:
                     game_state.leaderboard.add(color=entry["color"], name=entry["name"], points=entry["points"])
 
-                current_player = self.players[player_id]
+                current_player = self.players[session_id]
                 if current_player.hp <= 0 and self.players.get(current_player.last_hit):
                     current_position = self.players[current_player.last_hit].body.position
                 else:
                     current_position = current_player.body.position
 
-                for other_player_id, player in self.players.items():
+                for other_session_id, player in self.players.items():
                     position = player.body.position
                     velocity = player.body.velocity
                     game_state.players.add(
-                        id=player_id if player_id == other_player_id else self.id_mask_map[other_player_id],
+                        id=session_id if session_id == other_session_id else self.id_mask_map[other_session_id],
                         x=position.x,
                         y=position.y,
                         hp=player.hp,
@@ -348,7 +348,7 @@ class Game:
                         )
 
                 cctx = zstd.ZstdCompressor()
-                game_states[player_id] = cctx.compress(game_state.SerializeToString())
+                game_states[session_id] = cctx.compress(game_state.SerializeToString())
 
         return game_states
 
@@ -361,11 +361,11 @@ class Game:
         while True:
             current_time = time.time()
             with self.lock:
-                for player_id, player in list(self.players.items()):
+                for session_id, player in list(self.players.items()):
                     if current_time - player.last_update > 5:  # 5 seconds timeout
                         player.strikes += 1
                         if player.strikes >= self.max_strikes:
-                            self.remove_player(player_id)
+                            self.remove_player(session_id)
             time.sleep(5)  # Check every 5s
 
     def deal_dmg(self, receiver, dealer_id, damage):
@@ -470,17 +470,22 @@ async def startup_event():
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
-    print(redis_access.get(session_id))
-    game_server = app.state.game_server
-    await game_server.manager.connect(websocket, session_id)
+    pid = redis_access.get(session_id)
+    if pid:
+        pid = pid.decode('utf-8')
+        game_server = app.state.game_server
+        await game_server.manager.connect(websocket, session_id)
 
-    try:
-        while True:
-            data = await websocket.receive_bytes()
-            game_server.game.process_input(data, websocket.client)
-    except WebSocketDisconnect:
-        game_server.manager.disconnect(session_id)
-        print(f"Session {session_id} disconnected")
+        try:
+            while True:
+                data = await websocket.receive_bytes()
+                game_server.game.process_input(data, websocket.client, session_id)
+        except WebSocketDisconnect:
+            game_server.manager.disconnect(session_id)
+            print(f"Session {session_id} disconnected")
+    else:
+        await websocket.accept()
+        await websocket.close(code=1008, reason="Invalid session ID")
 
 if __name__ == "__main__":
     redis_access = redis.Redis(host='localhost', port=1111, db=0, username='db_user', password='db_pwd')

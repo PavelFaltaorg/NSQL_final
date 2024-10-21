@@ -1,36 +1,36 @@
-Nějaký nápady co se mi líbí co mi vyhodilo gpt:
+# Multiplayerová Hra - Redis a Mongo, FastAPI + Flask?
 
-### 1. **Real-Time Chat Application**
-   - **Description**: Create a chat application where users can create accounts, join rooms, and message each other in real time. Redis can be used for managing user sessions and WebSocket connections for real-time communication, while MongoDB stores chat histories and user profiles.
-   - **Key Features**:
-     - Real-time messaging (Redis for Pub/Sub or message queue)
-     - MongoDB for chat history and user accounts
-     - Authentication and user sessions
+## Instalace
 
-### 2. **Collaborative Document Editor**
-   - **Description**: A web-based real-time collaborative document editing tool. MongoDB stores document revisions and user data, while Redis is used for real-time collaboration and syncing changes between users.
-   - **Key Features**:
-     - MongoDB for storing documents and versioning history
-     - Redis for real-time data syncing between multiple users
-     - Flask backend with WebSocket for real-time collaboration
+1. **Verze Pythonu**: 3.11. (testovano na 3.11.2)
+   
+2. **Virtuální prostředí**:
+   - virtuální prostředí a nainstaluj potřebné závislosti:
+     ```bash
+     pip install -r requirements.txt
+     ```
 
-### 3. **Social Media Platform**
-   - **Description**: Create a simple social media platform where users can post updates, like, comment, and follow others. Use MongoDB for storing posts, user profiles, and interactions, while Redis can handle caching frequently accessed data (like popular posts) and managing user sessions.
-   - **Key Features**:
-     - MongoDB for user data, posts, comments, likes, and followers
-     - Redis for session management and caching hot content (e.g., trending posts)
-     - Real-time notifications using Redis (e.g., new likes or comments)
-     - Basic newsfeed algorithm to show users the latest or trending posts
+3. **Nastavení Redis**:
+   - konfiguračního soubor `redis.conf`
 
-### 4. **Real-Time Multiplayer Quiz Game**
-   - **Description**: Develop a real-time multiplayer quiz game where players can join rooms and compete by answering questions. Use Redis for handling real-time gameplay and syncing player answers, while MongoDB stores user profiles, game history, and leaderboard data.
-   - **Key Features**:
-     - Redis for syncing game state and managing player actions in real-time
-     - MongoDB for storing user profiles, questions, and game results
-     - Leaderboard to display top players or winners
-     - Live chat functionality for players in the same game room
+## Co už máme hotové
 
-### 5. **E-Shop (jakýhokoliv druhu)**
+- **Herní server**: Plně funkční server pro multiplayerovou hru, který zvládá všechny základní operace.
+- **Arcade klient**: Herní klient, který se dokáže připojit k serveru.
+- **Správa relací (sessions)**: Každá herní relace je ověřována pomocí Redis databáze.
+  - Redis ukládá relace ve formátu: `"user_session_id": "player_id"`, což zajišťuje rychlou a efektivní správu připojení hráčů.
 
-### 6. **Aplikace se sportovnímy výsledky**
-   - **Description**: inspirace: www.vysledky.com
+## Co je ještě potřeba udělat
+
+- **Integrace MongoDB**:
+  - Ukládat data hráčů do MongoDB ve formátu: `"player_id": player_data`.
+  - Při připojení hráče automaticky načíst jeho data z MongoDB.
+  - Implementovat periodické zálohování dat z paměti do MongoDB, aby nedocházelo ke ztrátě dat.
+
+- **Uživatelský klient**:
+  - Vytvořit samostatný klient, který by umožnil hráčům spravovat své účty mimo hru. Plánujeme, že tento klient umožní:
+    - Autorizace jmeno:heslo.  
+    - Kupovat upgrady.
+    - Spravovat seznam přátel.
+    - Marketplace??
+    - atd atd idk 

@@ -1,0 +1,45 @@
+{
+  "name": "user-client",
+  "version": "1.0.0",
+  "description": "A simple Electron-based user client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.example.user-client",
+    "productName": "User Client",
+    "directories": {
+      "buildResources": "assets"
+    },
+    "files": [
+      "main.js",
+      "index.html",
+      "preload.js",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^26.6.10",
+    "electron-builder": "^24.13.3"
+  }
+}

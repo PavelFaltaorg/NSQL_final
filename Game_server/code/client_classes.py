@@ -6,11 +6,8 @@ import arcade
 import pymunk
 import imgui
 from arcade_imgui import ArcadeRenderer
-import random
 from PIL import Image, ImageDraw
 import OpenGL.GL as gl
-import time
-
 
 PLAYER_RADIUS = 20
 BULLET_RADIUS = 5

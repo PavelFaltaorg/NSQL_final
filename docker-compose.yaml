@@ -1,0 +1,50 @@
+version: '3'
+services:
+  user-client:
+    build:
+      context: ./User_client
+      dockerfile: Dockerfile
+    environment:
+      DISPLAY: "${DISPLAY}"  # Allows the Electron app to use the host's display
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix  # Share X11 socket for display
+    depends_on:
+#      - auth-server
+      - game-client
+    network_mode: host  # Useful if you want to access services on localhost directly
+
+  game-client:
+    build:
+      context: ./Game_server
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+#    depends_on:
+#      - auth-server
+
+#  auth-server:
+#    build:
+#      context: ./Auth_server
+#      dockerfile: Dockerfile
+#    environment:
+#      REDIS_URL: redis://redis:6379
+#    ports:
+#      - "5000:5000"
+#    depends_on:
+#      - mongo
+#      - redis
+
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+volumes:
+  mongo-data:

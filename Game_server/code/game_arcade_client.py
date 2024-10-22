@@ -1,24 +1,18 @@
 import arcade
-import socket
 import threading
-import uuid
-from dataclasses import dataclass, field
-from typing import Dict, Set, List, Tuple
+from typing import Dict, Set, List
 import arcade.color
 import arcade.color
 import arcade.color
 import arcade.color
 import pymunk
-import zstandard as zstd
-import game_pb2
-from collections import deque
-from time import time, time_ns
+from time import time
 from datetime import datetime
 from pymunk import Vec2d
 import numpy as np
 import imgui
 from coolname import generate
-from client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
+from Game_server.code.client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
 import random
 import asyncio
 import websockets

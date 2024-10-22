@@ -1,4 +1,3 @@
-import socket
 import threading
 import time
 import game_pb2
@@ -8,7 +7,6 @@ from dataclasses import dataclass
 from typing import Tuple, Dict
 import zstandard as zstd
 from collections import deque
-import math
 from uuid import uuid4
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -177,7 +175,8 @@ class Game:
         player_input = self.deserialize_input(data)
         player_input.session_id = session_id
         if player_input.message:
-            self.message_buffer.append(game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
+            self.message_buffer.append(
+                game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
 
         with self.lock:
             if session_id not in self.players:

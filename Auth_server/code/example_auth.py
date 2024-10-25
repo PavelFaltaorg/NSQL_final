@@ -1,7 +1,7 @@
 # client.py
 import requests
 
-BASE_URL = 'https://localhost:5000'
+BASE_URL = 'https://localhost:8002'
 
 def register(username, password):
     url = f'{BASE_URL}/register'

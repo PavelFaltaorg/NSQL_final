@@ -20,6 +20,13 @@ services:
     ports:
       - "4000:4000"
       - "8000:8000" # jinak na game server neni videt
+
+  auth-server:
+    build:
+      context: ./Auth_server
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
 #    depends_on:
 #      - auth-server
 

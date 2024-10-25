@@ -19,6 +19,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "4000:4000"
+      - "8000:8000" # jinak na game server neni videt
 #    depends_on:
 #      - auth-server
 
@@ -39,7 +40,7 @@ services:
     volumes:
       - mongo-data:/data/db
     ports:
-      - "27017:27017"
+      - "27071:27017"
 
   redis:
     image: redis:latest

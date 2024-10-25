@@ -12,7 +12,7 @@ from pymunk import Vec2d
 import numpy as np
 import imgui
 from coolname import generate
-from Game_server.code.client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
+from client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
 import random
 import asyncio
 import websockets

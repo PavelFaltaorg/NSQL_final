@@ -54,9 +54,10 @@ def login():
 
 @app.route('/verify', methods=['POST'])
 def verify():
-    return jsonify({'message': 'Session verified'}), 200 # For testing purposes
     data = request.get_json()
     session_id = data.get('session_id')
+    return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200 # For testing purposes
+
     if not session_id:
         return jsonify({'message': 'Session ID is missing'}), 401
 

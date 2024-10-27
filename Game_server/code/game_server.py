@@ -1,4 +1,3 @@
-import socket
 import threading
 import time
 import game_pb2
@@ -8,7 +7,6 @@ from dataclasses import dataclass
 from typing import Tuple, Dict
 import zstandard as zstd
 from collections import deque
-import math
 from uuid import uuid4
 import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -177,7 +175,8 @@ class Game:
         player_input = self.deserialize_input(data)
         player_input.session_id = session_id
         if player_input.message:
-            self.message_buffer.append(game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
+            self.message_buffer.append(
+                game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
 
         with self.lock:
             if session_id not in self.players:
@@ -470,9 +469,9 @@ async def startup_event():
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
-    pid = redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
+    pid = "player"#redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
     if pid:
-        pid = pid.decode('utf-8')
+        #pid = pid.decode('utf-8')
         game_server = app.state.game_server
         await game_server.manager.connect(websocket, session_id)
 
@@ -488,5 +487,5 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         await websocket.close(code=1008, reason="Invalid session ID")
 
 if __name__ == "__main__":
-    redis_access = redis.Redis(host='localhost', port=1111, db=0, username='db_user', password='db_pwd')
+    #redis_access = redis.Redis(host='localhost', port=1111, db=0, username='db_user', password='db_pwd')
     uvicorn.run(app, host="0.0.0.0", port=8000)

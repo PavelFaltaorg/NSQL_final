@@ -68,4 +68,5 @@ def verify():
     return jsonify({'message': 'Session verified'}), 200
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0",debug=True, port=8002, ssl_context='adhoc')
+    # app.run(host="0.0.0.0",debug=True, port=8002, ssl_context='adhoc')
+    app.run(host="0.0.0.0", debug=True, port=8002) # Remove ssl_context='adhoc'

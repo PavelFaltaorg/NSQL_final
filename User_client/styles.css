@@ -84,10 +84,6 @@ input {
     background: #292929;
 }
 
-.game-mode-buttons {
-    flex-grow: 1; /* Allow this section to grow, pushing the settings button down */
-}
-
 .main-content {
     flex-grow: 1;
     background: #1c1c1c;

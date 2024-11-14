@@ -12,6 +12,7 @@ import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
 import redis
+import requests
 
 BULLET_COLLISION_TYPE = 1
 PLAYER_COLLISION_TYPE = 2
@@ -469,6 +470,12 @@ async def startup_event():
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    url = 'http://auth-server:8002/verify'
+    data = {'session_id': session_id}
+    response = requests.post(url, json=data)
+    print(response.json())
+    print("Session ID: ", session_id)
+
     pid = "player"#redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
     if pid:
         #pid = pid.decode('utf-8')

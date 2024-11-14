@@ -56,7 +56,7 @@ def login():
 def verify():
     data = request.get_json()
     session_id = data.get('session_id')
-    return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200 # For testing purposes
+    #return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200 # For testing purposes
 
     if not session_id:
         return jsonify({'message': 'Session ID is missing'}), 401
@@ -65,7 +65,7 @@ def verify():
     if not session or session['expires_at'] < datetime.datetime.now(datetime.timezone.utc):
         return jsonify({'message': 'Session is invalid or expired'}), 401
 
-    return jsonify({'message': 'Session verified'}), 200
+    return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200
 
 if __name__ == '__main__':
     # app.run(host="0.0.0.0",debug=True, port=8002, ssl_context='adhoc')

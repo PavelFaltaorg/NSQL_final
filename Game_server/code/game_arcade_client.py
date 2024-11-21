@@ -27,7 +27,7 @@ SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
 FPS = 60  # 60 FPS for game updates and rendering
 SCREEN = pymunk.Vec2d(1000, 1000)
 
-SESSION_ID = "63cfd76d-e51b-47ba-b998-b2a3e07a5998"
+SESSION_ID = "01550371-b690-4f60-8275-b316455e469e"
 
 MINIMAP_WIDTH = 250
 MINIMAP_HEIGHT = 250

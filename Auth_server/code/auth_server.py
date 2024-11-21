@@ -1,15 +1,20 @@
 from flask import Flask, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import uuid
-import datetime
 import os
+import redis
+import json
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 
 # In-memory database for demonstration purposes
-users_db = {}
 sessions_db = {}
+
+# Connect to Redis
+redis_host = os.getenv('REDIS_HOST', 'redis')
+redis_port = os.getenv('REDIS_PORT', 6379)
+redis_db = redis.StrictRedis(host=redis_host, port=redis_port, decode_responses=True)
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -20,14 +25,15 @@ def register():
     if not username or not password:
         return jsonify({'message': 'Username and password are required'}), 400
 
-    if username in users_db:
+    if redis_db.exists(username):
         return jsonify({'message': 'User already exists'}), 400
 
     hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-    users_db[username] = {
+    user_data = {
         'id': str(uuid.uuid4()),
         'password': hashed_password
     }
+    redis_db.set(username, json.dumps(user_data))
 
     return jsonify({'message': 'User registered successfully'}), 201
 
@@ -40,14 +46,17 @@ def login():
     if not username or not password:
         return jsonify({'message': 'Username and password are required'}), 400
 
-    user = users_db.get(username)
-    if not user or not check_password_hash(user['password'], password):
+    user_data = redis_db.get(username)
+    if not user_data:
+        return jsonify({'message': 'Invalid credentials'}), 401
+
+    user = json.loads(user_data)
+    if not check_password_hash(user['password'], password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
     session_id = str(uuid.uuid4())
     sessions_db[session_id] = {
-        'user_id': user['id'],
-        'expires_at': datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
+        'user_id': user['id']
     }
 
     return jsonify({'session_id': session_id})
@@ -56,17 +65,15 @@ def login():
 def verify():
     data = request.get_json()
     session_id = data.get('session_id')
-    #return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200 # For testing purposes
 
     if not session_id:
         return jsonify({'message': 'Session ID is missing'}), 401
 
     session = sessions_db.get(session_id)
-    if not session or session['expires_at'] < datetime.datetime.now(datetime.timezone.utc):
-        return jsonify({'message': 'Session is invalid or expired'}), 401
+    if not session:
+        return jsonify({'message': 'Session is invalid'}), 401
 
-    return jsonify({'message': 'Session verified', 'player_id':sessions_db[session_id]["user_id"]}), 200
+    return jsonify({'message': 'Session verified', 'player_id': session['user_id']}), 200
 
 if __name__ == '__main__':
-    # app.run(host="0.0.0.0",debug=True, port=8002, ssl_context='adhoc')
-    app.run(host="0.0.0.0", debug=True, port=8002) # Remove ssl_context='adhoc'
+    app.run(host="0.0.0.0", debug=True, port=8002)

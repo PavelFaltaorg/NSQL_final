@@ -3,33 +3,40 @@ import requests
 
 app = Flask(__name__)
 
-AUTH_SERVER_URL = "http://127.0.0.1:8002"
+AUTH_SERVER_URL = "http://auth-server:8002"
+
 
 @app.route('/login', methods=['POST'])
 def login():
-    credentials = request.json
-    if not credentials or 'username' not in credentials or 'password' not in credentials:
-        return jsonify({"error": "Invalid payload"}), 400
+    # Get credentials from the client frontend
+    data = request.get_json()
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'message': 'Username and password are required'}), 400
 
-    # Forward login request to auth server
-    auth_response = requests.post(f"{AUTH_SERVER_URL}/login", json=credentials)
-    if auth_response.status_code == 200:
-        return jsonify(auth_response.json()), 200
-    else:
-        return jsonify({"error": "Authentication failed"}), auth_response.status_code
+    # Forward the credentials to the auth server
+    try:
+        auth_response = requests.post(f"{AUTH_SERVER_URL}/login", json=data)
+        # Return the auth server's response to the frontend
+        return jsonify(auth_response.json()), auth_response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'message': 'Authentication server is unreachable', 'error': str(e)}), 500
 
-@app.route('/verify', methods=['GET'])
-def validate():
-    token = request.headers.get('Authorization')
-    if not token:
-        return jsonify({"error": "Token required"}), 400
+@app.route('/verify', methods=['POST'])
+def verify():
+    # Get the session ID from the frontend request
+    data = request.get_json()
+    session_id = data.get('session_id')
 
-    # Validate token with auth server
-    validate_response = requests.get(f"{AUTH_SERVER_URL}/verify", headers={"Authorization": token})
-    if validate_response.status_code == 200:
-        return jsonify(validate_response.json()), 200
-    else:
-        return jsonify({"error": "Invalid token"}), validate_response.status_code
+    if not session_id:
+        return jsonify({'message': 'Session ID is missing'}), 401
+
+    # Forward the session ID to the auth server for verification
+    try:
+        auth_response = requests.post(f"{AUTH_SERVER_URL}/verify", json={'session_id': session_id})
+        # Relay the auth server's response back to the frontend
+        return jsonify(auth_response.json()), auth_response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'message': 'Authentication server is unreachable', 'error': str(e)}), 500
 
 
 

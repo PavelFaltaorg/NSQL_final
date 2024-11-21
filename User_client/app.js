@@ -7,7 +7,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
     try {
         // Send the login request to the authentication server
-        const response = await fetch('http://127.0.0.1:8002/login', {
+        const response = await fetch('http://127.0.0.1:8001/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -27,9 +27,10 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
             // Optionally store session ID for future requests
             localStorage.setItem('session_id', data.session_id);
+
         } else {
             // Login failed: display error message
-            loginError.textContent = data.message || 'Invalid username or password. Please try again.';
+            loginError.textContent = data.message || 'Something went wrong. Please try again.';
             loginError.style.display = 'block';
         }
     } catch (error) {
@@ -37,6 +38,8 @@ document.getElementById('login-form').addEventListener('submit', async function(
         loginError.textContent = 'An error occurred while trying to log in. Please try again later.';
         loginError.style.display = 'block';
     }
+
+    document.getElementById('login-form').reset();
 });
 
 document.getElementById('btn-logout').addEventListener('click', async function() {

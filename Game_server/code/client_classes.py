@@ -343,7 +343,6 @@ class GUI:
         self.game = game
         imgui.create_context()
         self.renderer = ArcadeRenderer(game)
-        self.color = [game.input_state.color.r / 255.0, game.input_state.color.g / 255.0, game.input_state.color.b / 255.0]
         self.gui_elements_hovered = False
 
     def draw(self):
@@ -420,28 +419,6 @@ class GUI:
                 self.gui_elements_hovered = True
             imgui.end()
             # RGBA with alpha 0.5 for transparency
-
-            imgui.set_next_window_position(0, 30, imgui.FIRST_USE_EVER)  # x, y coordinates
-            # Color picker window
-            imgui.begin("Customization Panel", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE)
-            changed, self.color = imgui.color_edit3("", *self.color)
-            if changed:
-                # Update the player color in the input state
-                self.game.input_state.color.r = int(self.color[0] * 255)
-                self.game.input_state.color.g = int(self.color[1] * 255)
-                self.game.input_state.color.b = int(self.color[2] * 255)
-
-            if imgui.core.is_any_item_hovered():
-                self.gui_elements_hovered = True
-            # Name changer
-            changed, new_name = imgui.input_text("", self.game.input_state.name, 25, imgui.INPUT_TEXT_ENTER_RETURNS_TRUE)
-            if changed:
-                self.game.input_state.name = new_name
-
-            if imgui.is_window_hovered():
-                self.gui_elements_hovered = True
-
-            imgui.end()
 
             self.game.chat.draw()
 

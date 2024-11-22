@@ -27,7 +27,7 @@ SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
 FPS = 60  # 60 FPS for game updates and rendering
 SCREEN = pymunk.Vec2d(1000, 1000)
 
-SESSION_ID = "01550371-b690-4f60-8275-b316455e469e"
+SESSION_ID = "345b2ac0-22cd-4945-b6f9-0fa1c4c7ca69"
 
 MINIMAP_WIDTH = 250
 MINIMAP_HEIGHT = 250
@@ -144,13 +144,6 @@ class MyGame(arcade.Window):
 
         self.session_id = SESSION_ID
         self.input_state.session_id = self.session_id
-        self.input_state.name = ' '.join(x.capitalize() for x in generate(2))
-
-        player_color = rcg()
-
-        self.input_state.color.r = player_color[0]
-        self.input_state.color.g = player_color[1]
-        self.input_state.color.b = player_color[2]
 
         self.set_update_rate(1 / FPS)
 
@@ -207,6 +200,8 @@ class MyGame(arcade.Window):
         if game_state.map_size > 0:
             self.terrain.add_bounding_terrain(game_state.map_size)
             self.initial_connection_made = True
+            player = next((p for p in game_state.players if p.id == self.session_id), None)
+
 
     def setup(self):
         arcade.schedule(self.update_input, SEND_UPDATE_INTERVAL)

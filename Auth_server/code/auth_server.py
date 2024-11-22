@@ -54,6 +54,12 @@ def login():
     if not check_password_hash(user['password'], password):
         return jsonify({'message': 'Invalid credentials'}), 401
 
+    # Check if the user already has an active session
+    for session_id, session in sessions_db.items():
+        if session['user_id'] == user['id']:
+            return jsonify({'session_id': session_id})
+
+    # Create a new session if no active session exists
     session_id = str(uuid.uuid4())
     sessions_db[session_id] = {
         'user_id': user['id']

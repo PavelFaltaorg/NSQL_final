@@ -543,9 +543,7 @@ async def startup_event():
                             "max_hp": player.max_hp,
                             "hp_regen_rate": player.hp_regen_rate,
                             "last_hit": player.last_hit,
-                            "name": player.name,
-                            "dead": player.dead,
-                            "color": (player.color.r, player.color.g, player.color.b)
+                            "dead": player.dead
                         }},
                         upsert=True
                     )
@@ -560,7 +558,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     response = requests.post(url, json=auth_pack)
     print("Session ID: ", session_id)
 
-    pid = response.json().get('player_id')#redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
+    pid = response.json().get('player_id')
     if session_id in app.state.game_server.manager.active_connections:
         await websocket.accept()
         await websocket.close(code=1008, reason="Session ID already connected")

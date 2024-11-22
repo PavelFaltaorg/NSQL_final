@@ -561,8 +561,10 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     print("Session ID: ", session_id)
 
     pid = response.json().get('player_id')#redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
-    if pid:
-        #pid = pid.decode('utf-8')
+    if session_id in app.state.game_server.manager.active_connections:
+        await websocket.accept()
+        await websocket.close(code=1008, reason="Session ID already connected")
+    elif pid:
         game_server = app.state.game_server
         await game_server.manager.connect(websocket, session_id)
 

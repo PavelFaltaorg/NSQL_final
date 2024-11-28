@@ -23,10 +23,8 @@ message PlayerInput {
     bool shoot = 4;
     float target_position_x = 5;
     float target_position_y = 6;
-    string name = 7;
-    Color color = 8;
-    bool respawn = 9;
-    string message = 10;
+    bool respawn = 7;
+    string message = 8;
 }
 
 // Message representing a player in the game state

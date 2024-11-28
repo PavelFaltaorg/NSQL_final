@@ -30,5 +30,5 @@ def verify_session(session_id):
     return response.json()
 
 if __name__ == '__main__':
-    print(register('test1', 'test'))
-    print(login('test1', 'test'))
+    print(register('test11', 'test'))
+    print(login('test11', 'test'))

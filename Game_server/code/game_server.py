@@ -13,6 +13,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 import uvicorn
 import redis
 import requests
+from pymongo import MongoClient
+from coolname import generate
+import random
 
 BULLET_COLLISION_TYPE = 1
 PLAYER_COLLISION_TYPE = 2
@@ -27,6 +30,7 @@ SEND_DISTANCE_THRESHOLD = 1000
 
 @dataclass
 class Player:
+    player_id: str
     body: pymunk.Body
     shape: pymunk.Shape
     direction: Vec2d
@@ -80,10 +84,7 @@ class Leaderboard:
                     player_data["color"] = players[session_id].color
                     player_data["name"] = players[session_id].name
 
-    def create_new(self, player):
-        session_id = player.session_id
-        player_name = player.name
-        player_color = player.color
+    def create_new(self, session_id, player_name, player_color):
 
         self.scores[session_id] = {
             "color": player_color,
@@ -125,32 +126,87 @@ class Game:
         self.leaderboard = Leaderboard()  # Initialize Leaderboard
         self.message_buffer = deque()
 
-    def add_player(self, player_input: int, addr: Tuple[str, int]): # in the future change to load player data from mongodb
-        body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 20))
-        body.position = 0, 0
-        shape = pymunk.Circle(body, 20)
-        shape.collision_type = PLAYER_COLLISION_TYPE
-        self.space.add(body, shape)
-        self.leaderboard.create_new(player_input)
-        self.id_mask_map[player_input.session_id] = str(uuid4())
+    def add_player(self, player_input, addr: Tuple[str, int], pid): # in the future change to load player data from mongodb
+        print(f"Adding player with session_id: {player_input.session_id} and player_id: {pid}")
+        player_data = collection.find_one({"player_id": pid})
+        session_id = player_input.session_id
+        if player_data:
+            print(f"Found existing player data for player_id: {pid}: {player_data}")
+            body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 20))
+            body.position = player_data["position"]
+            shape = pymunk.Circle(body, 20)
+            shape.collision_type = PLAYER_COLLISION_TYPE
+            self.space.add(body, shape)
+            self.id_mask_map[session_id] = str(uuid4())
 
-        self.players[player_input.session_id] = Player(
-            body=body,
-            shape=shape,
-            direction=Vec2d(0, 0),
-            addr=addr,
-            last_update=time.time(),
-            strikes=0,
-            hp=1000,
-            max_hp=1000,
-            hp_regen_rate=0.5,
-            last_hit=None,
-            name=player_input.name,
-            dead=False,
-            color=player_input.color,
-            invincible=True
-        )
-        self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{player_input.name} Joined."))
+            self.players[session_id] = Player(
+                player_id=pid,
+                body=body,
+                shape=shape,
+                direction=Vec2d(0, 0),
+                addr=addr,
+                last_update=time.time(),
+                strikes=0,
+                hp=player_data["hp"],
+                max_hp=player_data["max_hp"],
+                hp_regen_rate=player_data["hp_regen_rate"],
+                last_hit=player_data["last_hit"],
+                name=player_data["name"],
+                dead=player_data["dead"],
+                color=game_pb2.Color(r=player_data["color"][0], g=player_data["color"][1], b=player_data["color"][2]),
+                invincible=True
+            )
+            print(self.players)
+        else:
+            print(f"No existing player data found for player_id: {pid}, creating new player")
+            body = pymunk.Body(1, pymunk.moment_for_circle(1, 0, 20))
+            body.position = 0, 0
+            shape = pymunk.Circle(body, 20)
+            shape.collision_type = PLAYER_COLLISION_TYPE
+            self.space.add(body, shape)
+            self.id_mask_map[session_id] = str(uuid4())
+
+            rancolor = (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
+
+            self.players[session_id] = Player(
+                player_id=pid,
+                body=body,
+                shape=shape,
+                direction=Vec2d(0, 0),
+                addr=addr,
+                last_update=time.time(),
+                strikes=0,
+                hp=1000,
+                max_hp=1000,
+                hp_regen_rate=0.5,
+                last_hit=None,
+                name=' '.join(x.capitalize() for x in generate(2)),
+                dead=False,
+                color=game_pb2.Color(r=rancolor[0], g=rancolor[1], b=rancolor[2]),
+                invincible=True
+            )
+            # Save the player data to the database
+            collection.update_one(
+                {"player_id": pid},
+                {"$set": {
+                    "position": body.position,
+                    "hp": self.players[player_input.session_id].hp,
+                    "max_hp": self.players[player_input.session_id].max_hp,
+                    "hp_regen_rate": self.players[player_input.session_id].hp_regen_rate,
+                    "last_hit": self.players[player_input.session_id].last_hit,
+                    "name": self.players[player_input.session_id].name,
+                    "dead": self.players[player_input.session_id].dead,
+                    "color": (self.players[player_input.session_id].color.r, self.players[player_input.session_id].color.g, self.players[player_input.session_id].color.b)
+                }},
+                upsert=True
+            )
+            print(f"New player data saved for player_id: {pid}")
+        player_name = self.players[session_id].name
+        player_color = self.players[session_id].color
+        self.leaderboard.create_new(session_id, player_name, player_color)
+
+        self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{player_name} Joined."))
+        print(f"Player {player_name} with session_id: {player_input.session_id} joined the game.")
 
     def respawn_player(self, session_id):
         player = self.players.get(session_id)
@@ -172,16 +228,18 @@ class Game:
             self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{player.name} Disconnected."))
             print(f"Player {session_id} removed from the game.")
 
-    def process_input(self, data: bytes, addr: Tuple[str, int], session_id: str):
+    def process_input(self, data: bytes, addr: Tuple[str, int], session_id: str, pid: str):
         player_input = self.deserialize_input(data)
         player_input.session_id = session_id
         if player_input.message:
+            player_name = self.players[session_id].name
+            player_color = self.players[session_id].color
             self.message_buffer.append(
-                game_pb2.ServerMessage(type=1, header=player_input.name, content=player_input.message, color=player_input.color))
+                game_pb2.ServerMessage(type=1, header=player_name, content=player_input.message, color=player_color))
 
         with self.lock:
             if session_id not in self.players:
-                self.add_player(player_input, addr)
+                self.add_player(player_input, addr, pid)
             else:
                 player = self.players[session_id]
                 player.addr = addr
@@ -194,15 +252,12 @@ class Game:
         player = self.players.get(player_input.session_id)
         if player:
             if not player.dead:
-                player.color = player_input.color
-                player.name = player_input.name
                 player.direction = Vec2d(player_input.direction_x, player_input.direction_y).normalized()
                 if player_input.shoot:
                     if player.invincible:
                         player.invincible = False
                     self.add_bullet(player_input)
             else:
-                player.color = game_pb2.Color(r=0, g=0, b=0)
                 if player_input.respawn:
                     self.respawn_player(player_input.session_id)
 
@@ -332,7 +387,7 @@ class Game:
                         vy=velocity.y,
                         name=player.name,
                         max_hp=player.max_hp,
-                        color=player.color
+                        color=player.color if not player.dead else game_pb2.Color(r=0, g=0, b=0)
                     )
 
                 for bullet_id, bullet in self.bullets.items():
@@ -467,24 +522,54 @@ async def startup_event():
 
     # Start the periodic game state sending task
     game_server.send_game_state_task = asyncio.create_task(game_server.send_game_state_periodically())
+    async def pullpush_player_data_periodically():
+        while True:
+            await asyncio.sleep(5)  # Run every 60 seconds
+            with game_server.game.lock:
+                # Pull data from MongoDB and update game.players' name and color
+                for session_id, player in game_server.game.players.items():
+                    player_data = collection.find_one({"player_id": player.player_id})
+                    if player_data:
+                        player.name = player_data["name"]
+                        player.color = game_pb2.Color(r=player_data["color"][0], g=player_data["color"][1], b=player_data["color"][2])
+
+                # Push current game.players data to MongoDB
+                for session_id, player in game_server.game.players.items():
+                    collection.update_one(
+                        {"player_id": player.player_id},
+                        {"$set": {
+                            "position": player.body.position,
+                            "hp": player.hp,
+                            "max_hp": player.max_hp,
+                            "hp_regen_rate": player.hp_regen_rate,
+                            "last_hit": player.last_hit,
+                            "dead": player.dead
+                        }},
+                        upsert=True
+                    )
+
+    # Start the periodic pull-push player data task
+    asyncio.create_task(pullpush_player_data_periodically())
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(websocket: WebSocket, session_id: str):
     url = 'http://auth-server:8002/verify'
-    data = {'session_id': session_id}
-    response = requests.post(url, json=data)
+    auth_pack = {'session_id': session_id}
+    response = requests.post(url, json=auth_pack)
     print("Session ID: ", session_id)
 
-    pid = response.json().get('player_id')#redis_access.get(session_id) # player id, not used as of now but will be used to access player data from mongodb
-    if pid:
-        #pid = pid.decode('utf-8')
+    pid = response.json().get('player_id')
+    if session_id in app.state.game_server.manager.active_connections:
+        await websocket.accept()
+        await websocket.close(code=1008, reason="Session ID already connected")
+    elif pid:
         game_server = app.state.game_server
         await game_server.manager.connect(websocket, session_id)
 
         try:
             while True:
                 data = await websocket.receive_bytes()
-                game_server.game.process_input(data, websocket.client, session_id)
+                game_server.game.process_input(data, websocket.client, session_id, pid)
         except WebSocketDisconnect:
             game_server.manager.disconnect(session_id)
             print(f"Session {session_id} disconnected")
@@ -493,5 +578,8 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
         await websocket.close(code=1008, reason="Invalid session ID")
 
 if __name__ == "__main__":
-    #redis_access = redis.Redis(host='localhost', port=1111, db=0, username='db_user', password='db_pwd')
+    client = MongoClient("mongodb://mongo:27017/")
+    db = client.game
+
+    collection = db.game_state
     uvicorn.run(app, host="0.0.0.0", port=8000)

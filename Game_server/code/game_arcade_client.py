@@ -27,8 +27,6 @@ SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
 FPS = 60  # 60 FPS for game updates and rendering
 SCREEN = pymunk.Vec2d(1000, 1000)
 
-SESSION_ID = "a2fdc8db-1d8a-4ba8-adbd-0fc377970d96"
-
 MINIMAP_WIDTH = 250
 MINIMAP_HEIGHT = 250
 
@@ -36,9 +34,9 @@ def rcg():
     return (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
 
 class NetworkManager:
-    def __init__(self, game):
+    def __init__(self, game, session_id):
         self.game = game
-        self.uri = f"ws://localhost:8000/ws/{SESSION_ID}"  # WebSocket URL
+        self.uri = f"ws://localhost:8000/ws/{session_id}"  # WebSocket URL
         self.cctx = zstd.ZstdDecompressor()
         self.running = True
         self.server_fps = 1
@@ -122,7 +120,7 @@ class NetworkManager:
 
 
 class MyGame(arcade.Window):
-    def __init__(self):
+    def __init__(self, session_id):
         super().__init__(SCREEN.x, SCREEN.y, "Arcade Game", resizable=True, vsync=True)
         arcade.set_background_color(arcade.color.AMAZON)
 
@@ -142,8 +140,8 @@ class MyGame(arcade.Window):
 
         self.input_state = game_pb2.PlayerInput()
 
-        self.session_id = SESSION_ID
-        self.input_state.session_id = self.session_id
+        self.session_id = session_id
+        self.input_state.session_id = session_id
 
         self.set_update_rate(1 / FPS)
 
@@ -162,7 +160,7 @@ class MyGame(arcade.Window):
 
         self.gui = GUI(self)
 
-        self.network_manager = NetworkManager(self)
+        self.network_manager = NetworkManager(self, session_id)
 
         self.asyncio_thread = threading.Thread(target=self.start_asyncio_loop, daemon=True)
         self.asyncio_thread.start()
@@ -477,8 +475,8 @@ class MyGame(arcade.Window):
     def stop(self):
         self.network_manager.stop()
 
-def main():
-    game = MyGame()
+def start_game(session_id):
+    game = MyGame(session_id=session_id)
     game.setup()
     try:
         arcade.run()
@@ -486,4 +484,5 @@ def main():
         game.stop()
 
 if __name__ == "__main__":
-    main()
+    SESSION_ID = "a2fdc8db-1d8a-4ba8-adbd-0fc377970d96"
+    start_game(SESSION_ID)

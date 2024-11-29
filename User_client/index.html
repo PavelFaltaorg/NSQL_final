@@ -8,7 +8,7 @@
 </head>
 <body>
 <div class="app-container">
-  <div id="login-section" class="menu-section">
+  <div id="login-section" class="menu-section" style="display: block">
     <div class="login-form-container">
       <h2>Login</h2>
       <form id="login-form">
@@ -38,23 +38,43 @@
       </div>
     </div>
 
-    <div id="settings-section" class="menu-section" style="display: none;">
-      <div class="settings-content">
-        <h2>Settings</h2>
-        <p>Adjust your preferences here.</p>
-        <!-- You can add settings options like audio controls, graphics settings, etc. -->
-        <button class="btn-secondary" id="btn-save-settings">Save Settings</button>
-        <button class="btn-secondary" id="btn-back-to-game">Back to Game</button>
-      </div>
-    </div>
-
-
     <div class="main-content">
       <h2>Welcome to Top-Down Shooter</h2>
       <p>Select a game mode to start playing, or adjust your settings.</p>
     </div>
   </div>
+
+  <div id="settings-section" class="menu-section" style="display: none;">
+    <div class="settings-content">
+      <h2>Settings</h2>
+      <p>Adjust your preferences here.</p>
+      <!-- You can add settings options like audio controls, graphics settings, etc. -->
+      <button class="btn-secondary" id="btn-save-settings">Save Settings</button>
+      <button class="btn-secondary" id="btn-back-to-menu-settings">Back to Game</button>
+    </div>
+  </div>
+
+  <div id="customize-section" class="menu-section" style="display: none;">
+    <div class="customize-content">
+      <h2>Customization</h2>
+      <p>Change your appearance here.</p>
+
+      <!-- Color Picker Section -->
+      <div class="color-picker-container">
+        <label for="player-color">Choose your color:</label>
+        <input type="color" id="player-color" value="#ff0000">
+      </div>
+
+      <!-- Preview Area -->
+      <div id="player-preview" style="margin-top: 20px; width: 100px; height: 100px; background-color: #ff0000; border: 2px solid #e0e0e0; border-radius: 10  px;">
+      </div>
+
+      <button class="btn-secondary" id="btn-back-to-menu-customize">Back to Game</button>
+    </div>
+  </div>
 </div>
+
+
 
 <script src="app.js"></script>
 </body>

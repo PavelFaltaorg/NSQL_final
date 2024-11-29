@@ -100,3 +100,21 @@ input {
     margin-top: 10px;
     font-size: 0.9em;
 }
+
+#settings-section {
+    display: flex; /* Ensure it's set to flex when visible */
+    flex-direction: column; /* Proper alignment for content */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Fill the parent container */
+    height: 100%; /* Fill the parent container */
+}
+
+#customize-section {
+    display: flex; /* Ensure it's set to flex when visible */
+    flex-direction: column; /* Proper alignment for content */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Fill the parent container */
+    height: 100%; /* Fill the parent container */
+}

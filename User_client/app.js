@@ -54,8 +54,9 @@ document.getElementById('btn-logout').addEventListener('click', async function()
 
 // Play Button functionality
 document.getElementById('btn-play').addEventListener('click', function() {
-    // Send a message to the main process
-    window.electronAPI.sendMessage(localStorage.getItem('session_id'));
+    // Send a message to the main process to start the game
+    window.electronAPI.startGame(localStorage.getItem('session_id'));
+
 
 
 
@@ -67,8 +68,20 @@ document.getElementById('btn-settings').addEventListener('click', function() {
     document.getElementById('settings-section').style.display = 'block';  // Show the settings section
 });
 
-// Back to Game Button functionality
-document.getElementById('btn-back-to-game').addEventListener('click', function() {
+// Back to menu from settings Button functionality
+document.getElementById('btn-back-to-menu-settings').addEventListener('click', function() {
     document.getElementById('settings-section').style.display = 'none';  // Hide settings section
+    document.getElementById('game-menu').style.display = 'flex';  // Show the game menu again
+});
+
+// Custmize Button functionality
+document.getElementById('btn-customize').addEventListener('click', function() {
+    document.getElementById('game-menu').style.display = 'none';  // Hide the game menu
+    document.getElementById('customize-section').style.display = 'block';  // Show the customize section
+});
+
+// Back to menu from customize Button functionality
+document.getElementById('btn-back-to-menu-customize').addEventListener('click', function() {
+    document.getElementById('customize-section').style.display = 'none';  // Hide customize section
     document.getElementById('game-menu').style.display = 'flex';  // Show the game menu again
 });

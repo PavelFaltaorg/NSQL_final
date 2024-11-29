@@ -12,11 +12,11 @@ from pymunk import Vec2d
 import numpy as np
 import imgui
 from coolname import generate
-from client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
+from Game_server.code.client_classes import Player, Bullet, Terrain, GameState, Entity, ChatWindow, Minimap, GUI
 import random
 import asyncio
 import websockets
-import game_pb2  # Assuming you have the compiled game_pb2 file
+import Game_server.code.game_pb2 as game_pb2
 import zstandard as zstd
 from collections import deque
 from time import time_ns

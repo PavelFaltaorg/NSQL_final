@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
 
 function createWindow () {
@@ -9,7 +9,6 @@ function createWindow () {
       preload: path.join(__dirname, 'preload.js')
     }
   })
-
   win.loadFile('index.html')
 }
 
@@ -29,3 +28,28 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
+
+
+// Listen for messages from the renderer
+ipcMain.on('message', (event, message) => {
+  console.log('Message from renderer:', message);
+
+  const arg = message;
+  const command = "python start_game.py ${arg}";
+  const { exec } = require('child_process');
+
+    exec(command, (error, stdout, stderr) => {
+        if (error) {
+        console.error(`exec error: ${error}`);
+        return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.error(`stderr: ${stderr}`);
+    });
+
+
+});
+
+
+
+

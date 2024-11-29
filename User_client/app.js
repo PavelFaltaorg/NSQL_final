@@ -1,6 +1,5 @@
 document.getElementById('login-form').addEventListener('submit', async function(event) {
     event.preventDefault();
-
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const loginError = document.getElementById('login-error');
@@ -44,24 +43,6 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
 document.getElementById('btn-logout').addEventListener('click', async function() {
     try {
-        // // Send a logout request to the server (if necessary)
-        // const response = await fetch('http://127.0.0.1:8002/logout', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify({ session_id: localStorage.getItem('session_id') }), // Send session ID if required by the backend
-        // });
-
-        // if (response.ok) {
-        //     // Logout successful: reset the UI
-        //     localStorage.removeItem('session_id');
-        //     document.getElementById('game-menu').style.display = 'none';
-        //     document.getElementById('login-section').style.display = 'block';
-        //     document.querySelector('.app-container').style.justifyContent = 'center'; // Restore layout for login
-        // } else {
-        //     console.error('Logout failed:', response.statusText);
-        // }
         document.getElementById('game-menu').style.display = 'none';
         document.getElementById('login-section').style.display = 'block';
         document.querySelector('.app-container').style.justifyContent = 'center'; // Restore layout for login
@@ -69,6 +50,15 @@ document.getElementById('btn-logout').addEventListener('click', async function()
     } catch (error) {
         console.error('Error during logout:', error);
     }
+});
+
+// Play Button functionality
+document.getElementById('btn-play').addEventListener('click', function() {
+    // Send a message to the main process
+    window.electronAPI.sendMessage(localStorage.getItem('session_id'));
+
+
+
 });
 
 // Settings Button functionality

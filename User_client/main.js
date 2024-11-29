@@ -31,11 +31,8 @@ app.on('window-all-closed', () => {
 
 
 // Listen for messages from the renderer
-ipcMain.on('message', (event, message) => {
-  console.log('Message from renderer:', message);
-
-  const arg = message;
-  const command = "python start_game.py ${arg}";
+ipcMain.on('start-game', (event, session_id) => {
+  const command = `python3 start_game.py "${session_id}"`;
   const { exec } = require('child_process');
 
     exec(command, (error, stdout, stderr) => {
@@ -46,8 +43,10 @@ ipcMain.on('message', (event, message) => {
         console.log(`stdout: ${stdout}`);
         console.error(`stderr: ${stderr}`);
     });
+});
 
-
+ipcMain.on('message', (event, message) => {
+    console.log('Recieved message:', message);
 });
 
 

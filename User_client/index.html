@@ -46,30 +46,36 @@
 
   <div id="settings-section" class="menu-section" style="display: none;">
     <div class="settings-content">
+      <button class="btn-secondary back-to-menu-button" id="btn-back-to-menu-settings"> <-- Back to main menu</button>
       <h2>Settings</h2>
       <p>Adjust your preferences here.</p>
       <!-- You can add settings options like audio controls, graphics settings, etc. -->
       <button class="btn-secondary" id="btn-save-settings">Save Settings</button>
-      <button class="btn-secondary" id="btn-back-to-menu-settings">Back to Game</button>
     </div>
   </div>
 
   <div id="customize-section" class="menu-section" style="display: none;">
     <div class="customize-content">
+      <!-- Back to Menu Button -->
+      <button class="btn-secondary back-to-menu-button" id="btn-back-to-menu-customize"> <-- Back to main menu</button>
+
+      <!-- Customization Section -->
       <h2>Customization</h2>
       <p>Change your appearance here.</p>
+
+      <!-- Name Change Section -->
+      <div class="name-change-container">
+        <label for="player-name">Change your name:</label>
+        <input type="text" id="player-name" placeholder="Enter your name">
+        <button class="btn-primary" id="confirm-name-change">Confirm</button>
+      </div>
 
       <!-- Color Picker Section -->
       <div class="color-picker-container">
         <label for="player-color">Choose your color:</label>
         <input type="color" id="player-color" value="#ff0000">
+        <button class="btn-primary" id="confirm-color-change">Confirm</button>
       </div>
-
-      <!-- Preview Area -->
-      <div id="player-preview" style="margin-top: 20px; width: 100px; height: 100px; background-color: #ff0000; border: 2px solid #e0e0e0; border-radius: 10  px;">
-      </div>
-
-      <button class="btn-secondary" id="btn-back-to-menu-customize">Back to Game</button>
     </div>
   </div>
 </div>

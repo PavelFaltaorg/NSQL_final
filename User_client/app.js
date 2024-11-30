@@ -5,7 +5,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
     const loginError = document.getElementById('login-error');
 
     try {
-        // Send the login request to the authentication server
+        // Send the login request to the backend server
         const response = await fetch('http://127.0.0.1:8001/login', {
             method: 'POST',
             headers: {
@@ -74,7 +74,7 @@ document.getElementById('btn-back-to-menu-settings').addEventListener('click', f
     document.getElementById('game-menu').style.display = 'flex';  // Show the game menu again
 });
 
-// Custmize Button functionality
+// Customize Button functionality
 document.getElementById('btn-customize').addEventListener('click', function() {
     document.getElementById('game-menu').style.display = 'none';  // Hide the game menu
     document.getElementById('customize-section').style.display = 'block';  // Show the customize section
@@ -84,4 +84,67 @@ document.getElementById('btn-customize').addEventListener('click', function() {
 document.getElementById('btn-back-to-menu-customize').addEventListener('click', function() {
     document.getElementById('customize-section').style.display = 'none';  // Hide customize section
     document.getElementById('game-menu').style.display = 'flex';  // Show the game menu again
+});
+
+// Utility function to convert hex to RGB
+function hexToRgb(hex) {
+    // Remove the "#" if present
+    hex = hex.replace(/^#/, '');
+
+    // Parse the hex color string
+    if (hex.length === 6) {
+        const bigint = parseInt(hex, 16);
+        return {
+            r: (bigint >> 16) & 255,
+            g: (bigint >> 8) & 255,
+            b: bigint & 255,
+        };
+    } else {
+        return null; // Invalid format
+    }
+}
+
+// Color Change functionality
+document.getElementById('confirm-color-change').addEventListener('click', async function(event) {
+    const hexColor = document.getElementById('player-color').value;
+
+    // Convert hex to RGB
+    const rgbColor = hexToRgb(hexColor);
+    if (!rgbColor) {
+        console.error('Invalid color format');
+        return;
+    }
+    window.electronAPI.sendMessage(`Changing player color to RGB(${rgbColor.r}, ${rgbColor.g}, ${rgbColor.b})`);
+    // Send the RGB values to the backend
+    try {
+        const response = await fetch('http://127.0.0.1:8001/changeplayercolor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                session_id: localStorage.getItem('session_id'),
+                red: rgbColor.r,
+                green: rgbColor.g,
+                blue: rgbColor.b,
+            }),
+        });
+
+        // Debugging
+        window.electronAPI.sendMessage(JSON.stringify({
+            session_id: localStorage.getItem('session_id'),
+            red: rgbColor.r,
+            green: rgbColor.g,
+            blue: rgbColor.b,
+        }));
+
+        if (response.ok) {
+            window.electronAPI.sendMessage("Color changed successfully!");
+        }
+
+
+    } catch (error) {
+        window.electronAPI.sendMessage("An error occurred while trying to change the color. Please try again later.");
+        window.electronAPI.sendMessage(error);
+    }
 });

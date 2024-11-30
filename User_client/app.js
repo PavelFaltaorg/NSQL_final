@@ -148,3 +148,30 @@ document.getElementById('confirm-color-change').addEventListener('click', async 
         window.electronAPI.sendMessage(error);
     }
 });
+
+// Name Change functionality
+document.getElementById('confirm-name-change').addEventListener('click', async function(event) {
+    const newName = document.getElementById('player-name').value;
+
+    // Send the new name to the backend
+    try {
+        const response = await fetch('http://127.0.0.1:8001/changeplayername', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                session_id: localStorage.getItem('session_id'),
+                name: newName,
+            }),
+        });
+
+        if (response.ok) {
+            window.electronAPI.sendMessage("Name changed successfully!");
+        }
+
+    } catch (error) {
+        window.electronAPI.sendMessage("An error occurred while trying to change the name. Please try again later.");
+        window.electronAPI.sendMessage(error);
+    }
+});

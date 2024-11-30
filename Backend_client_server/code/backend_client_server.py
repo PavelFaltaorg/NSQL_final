@@ -32,9 +32,6 @@ def change_player_color():
         # Parse JSON data from the request
         data = request.json
 
-        if data is None:
-            return jsonify({"error": "No JSON payload received"}), 400
-
         # Extract RGB values
         red = data.get('red')
         green = data.get('green')
@@ -56,6 +53,32 @@ def change_player_color():
         collection.update_one({'player_id': player_id}, {'$set': {'color': new_color}})
 
         return jsonify({'message': 'Player color updated successfully'}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/changeplayername', methods=['POST'])
+def change_player_name():
+    try:
+        # Parse JSON data from the request
+        data = request.json
+
+        # Extract new name
+        new_name = data.get('name')
+
+        session_id = data.get('session_id')
+
+        # Simulated authentication (replace with actual implementation)
+        auth_response = requests.post(f"{AUTH_SERVER_URL}/verify", json={'session_id': session_id})
+        if auth_response.status_code != 200:
+            return jsonify({"error": "Authentication failed"}), 401
+
+        player_id = auth_response.json().get('player_id')
+
+        # Update the player's name in the database
+        collection.update_one({'player_id': player_id}, {'$set': {'name': new_name}})
+
+        return jsonify({'message': 'Player name updated successfully'}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

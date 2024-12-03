@@ -123,10 +123,10 @@ class Game:
         self.last_bullet_id = 0
         self.map_size = 1000
         self.id_mask_map = {}
-        self.leaderboard = Leaderboard()  # Initialize Leaderboard
+        self.leaderboard = Leaderboard()
         self.message_buffer = deque()
 
-    def add_player(self, player_input, addr: Tuple[str, int], pid): # in the future change to load player data from mongodb
+    def add_player(self, player_input, addr: Tuple[str, int], pid): # in the future change to load player data from mongodb edit: already done dumbass
         print(f"Adding player with session_id: {player_input.session_id} and player_id: {pid}")
         player_data = collection.find_one({"player_id": pid})
         session_id = player_input.session_id
@@ -270,24 +270,18 @@ class Game:
             bullet_shape.sensor = True
             bullet_shape.collision_type = BULLET_COLLISION_TYPE
 
-            # Calculate distance between player and cursor
             cursor_position = Vec2d(player_input.target_position_x, player_input.target_position_y)
             distance_to_cursor = (cursor_position - player.body.position).length
 
-            # Adjust time step based on distance
             time_step = -(distance_to_cursor / BULLET_SPEED)
 
-            # Predict future position of the player
             future_position = player.body.position + player.body.velocity * time_step
 
-            # Calculate direction vector from predicted future position to target position (cursor position)
             direction = cursor_position - future_position
 
-            # Normalize the direction vector
             if direction.length > 0:
                 direction = direction.normalized()
 
-            # Set bullet velocity
             bullet_body.velocity = direction * BULLET_SPEED
 
             self.space.add(bullet_body, bullet_shape)
@@ -314,7 +308,7 @@ class Game:
                 if not player.dead:
                     if player.direction.length > 0:
                         player.body.apply_force_at_local_point(player.direction * PLAYER_SPEED)
-                    player.body.velocity *= 0.95  # Apply damping
+                    player.body.velocity *= 0.95
 
                     if player.hp < player.max_hp:
                         player.hp = min(player.hp + player.hp_regen_rate * dt, player.max_hp)
@@ -322,7 +316,7 @@ class Game:
                     if player.hp <= 0:
                         player.dead = True
                         self.leaderboard.add_points(player.last_hit, player.max_hp)
-                        print(f"Player {player.name} died.")  # Death event
+                        print(f"Player {player.name} died.")
                         self.message_buffer.append(game_pb2.ServerMessage(type=0, content=f"{self.players[player.last_hit].name} Killed {player.name}."))
 
             for bullet_id, bullet in list(self.bullets.items()):
@@ -517,23 +511,20 @@ async def startup_event():
     game_server = GameServer()
     app.state.game_server = game_server
 
-    # Start the game logic in a separate thread
     threading.Thread(target=game_server.start, daemon=True).start()
 
-    # Start the periodic game state sending task
     game_server.send_game_state_task = asyncio.create_task(game_server.send_game_state_periodically())
     async def pullpush_player_data_periodically():
         while True:
-            await asyncio.sleep(5)  # Run every 60 seconds
+            await asyncio.sleep(5)
             with game_server.game.lock:
-                # Pull data from MongoDB and update game.players' name and color
+
                 for session_id, player in game_server.game.players.items():
                     player_data = collection.find_one({"player_id": player.player_id})
                     if player_data:
                         player.name = player_data["name"]
                         player.color = game_pb2.Color(r=player_data["color"][0], g=player_data["color"][1], b=player_data["color"][2])
 
-                # Push current game.players data to MongoDB
                 for session_id, player in game_server.game.players.items():
                     collection.update_one(
                         {"player_id": player.player_id},
@@ -548,7 +539,6 @@ async def startup_event():
                         upsert=True
                     )
 
-    # Start the periodic pull-push player data task
     asyncio.create_task(pullpush_player_data_periodically())
 
 @app.websocket("/ws/{session_id}")

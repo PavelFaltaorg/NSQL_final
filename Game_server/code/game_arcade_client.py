@@ -21,22 +21,18 @@ import zstandard as zstd
 from collections import deque
 from time import time_ns
 
-# Configuration Constants
 SERVER_ADDRESS = ('localhost', 12345)
-SEND_UPDATE_INTERVAL = 1 / 60.0  # 60 FPS for sending input
-FPS = 60  # 60 FPS for game updates and rendering
+SEND_UPDATE_INTERVAL = 1 / 60.0
+FPS = 60 
 SCREEN = pymunk.Vec2d(1000, 1000)
 
 MINIMAP_WIDTH = 250
 MINIMAP_HEIGHT = 250
 
-def rcg():
-    return (random.randrange(0, 255), random.randrange(0, 255), random.randrange(0, 255))
-
 class NetworkManager:
     def __init__(self, game, session_id):
         self.game = game
-        self.uri = f"ws://localhost:8000/ws/{session_id}"  # WebSocket URL
+        self.uri = f"ws://localhost:8000/ws/{session_id}"
         self.cctx = zstd.ZstdDecompressor()
         self.running = True
         self.server_fps = 1
@@ -60,14 +56,13 @@ class NetworkManager:
 
     async def send_input(self, websocket):
         while self.running:
-            input_state = self.game.input_state  # Assuming a method to create the input state
+            input_state = self.game.input_state
             mes = self.game.chat.get_string_message()
             input_state.message = ""
             if mes:
                 input_state.message = mes
 
             try:
-                # Send serialized input to the server
                 await websocket.send(input_state.SerializeToString())
                 input_state.respawn = False
             except websockets.ConnectionClosed:
@@ -76,7 +71,7 @@ class NetworkManager:
             except Exception as e:
                 print(f"Error sending input: {e}")
 
-            await asyncio.sleep(SEND_UPDATE_INTERVAL)  # Send input every second (or modify as needed)
+            await asyncio.sleep(SEND_UPDATE_INTERVAL)
 
     async def receive_game_state(self, websocket):
         while self.running:
@@ -105,7 +100,6 @@ class NetworkManager:
 
                 if new_game_state.server_fps != self.server_fps:
                     self.server_fps = new_game_state.server_fps
-                    # Update timeout as needed, depending on your server's FPS
 
             except websockets.ConnectionClosed as e:
                 print(f"Game State not received: {e.reason}")
@@ -145,7 +139,6 @@ class MyGame(arcade.Window):
 
         self.set_update_rate(1 / FPS)
 
-        # Initialize the main camera
         self.game_camera = arcade.Camera(self.width, self.height)
         self.gui_camera = arcade.Camera(self.width, self.height)
 
@@ -187,7 +180,6 @@ class MyGame(arcade.Window):
         self.input_state.target_position_x = target_position.x
         self.input_state.target_position_y = target_position.y
 
-        # self.network_manager.send_input(self.input_state)
 
     def on_update(self, dt: float):
         game_state_copy = self.game_state
@@ -204,9 +196,7 @@ class MyGame(arcade.Window):
     def setup(self):
         arcade.schedule(self.update_input, SEND_UPDATE_INTERVAL)
         arcade.schedule(self.update_displays, 1 / 2)
-        #threading.Thread(target=self.network_manager.receive_game_state, daemon=True).start()
 
-        # Create a tray at the top of the screen
         self.tray_background = arcade.SpriteSolidColor(self.width, 30, (0, 0, 0, 180))
         self.tray_background.center_x = self.width // 2
         self.tray_background.center_y = self.height - 15
@@ -238,7 +228,6 @@ class MyGame(arcade.Window):
     def on_draw(self):
         self.clear()
 
-        # Use the main camera
         self.game_camera.use()
         self.bullet_list.draw()
         self.player_list.draw()
@@ -300,7 +289,6 @@ class MyGame(arcade.Window):
     def update_entities(self, entity_dict: Dict[str, Entity], new_entities: List[Entity]):
         new_entity_dict = {e.id: e for e in new_entities}
 
-        # Remove entities that are no longer present
         for e_id in list(entity_dict.keys()):
             if e_id not in new_entity_dict:
                 entity_dict[e_id].shape.remove_from_sprite_lists()
@@ -309,7 +297,6 @@ class MyGame(arcade.Window):
                     self.remove_health_bar(e_id)
                 del entity_dict[e_id]
 
-        # Update existing entities and add new ones
         for e in new_entity_dict.values():
             if e.id not in entity_dict:
                 entity_dict[e.id] = self.create_entity(e)
@@ -318,7 +305,6 @@ class MyGame(arcade.Window):
                 entity.update_position(1 / FPS, FPS, self.network_manager.server_fps)
                 entity.update(e)
 
-        # Update health bars and text sprites
         for session_id, player in self.players.items():
             health_bar_background = next((hb for hb in self.health_bar_backgrounds if hb.session_id == session_id), None)
             health_bar = next((hb for hb in self.health_bars if hb.session_id == session_id), None)
@@ -393,17 +379,17 @@ class MyGame(arcade.Window):
 
     def add_text_sprite(self, session_id, player):
         name_x = player.shape.center_x
-        name_y = player.shape.center_y + 50  # Adjust this value as needed
+        name_y = player.shape.center_y + 50
         text_sprite = arcade.create_text_sprite(
-            player.name,  # Assuming each player object has a 'name' attribute
+            player.name,
             name_x,
             name_y,
             arcade.color.BLACK if session_id == self.session_id else arcade.color.RED,
-            14,  # Font size
+            14,
             anchor_x="center",
             bold=True
         )
-        text_sprite.session_id = session_id  # Attach session_id to the text sprite
+        text_sprite.session_id = session_id
         self.text_sprite_list.append(text_sprite)
 
     def add_health_bar(self, session_id, player):
@@ -436,7 +422,6 @@ class MyGame(arcade.Window):
                 self.update_entity_buffer(self.bullets[bullet.id], bullet)
 
     def update_entity_buffer(self, entity: Entity, data: Entity):
-        #entity.u = 0
         entity.positions_buffer.append((time(), pymunk.Vec2d(data.x, data.y)))
         entity.position_at_receive = pymunk.Vec2d(entity.shape.position[0], entity.shape.position[1])
 
@@ -464,12 +449,10 @@ class MyGame(arcade.Window):
                 else:
                     target_camera_pos = my_player.shape.position
 
-            # Linear interpolation to smooth the camera movement
-            interpolation_speed = 0.05  # You can tweak this value for more/less smoothing
+            interpolation_speed = 0.05 
             target_offset = (target_camera_pos - pymunk.Vec2d(self.width, self.height) // 2)
             self.current_camera_pos += (target_offset - self.current_camera_pos) * interpolation_speed
 
-            # Move the camera to the new smoothed position
             self.game_camera.move_to(self.current_camera_pos)
 
     def stop(self):

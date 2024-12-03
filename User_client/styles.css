@@ -35,6 +35,27 @@ body, html {
     align-items: center;
 }
 
+#register-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.register-prompt {
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.register-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register-link:hover {
+    text-decoration: underline;
+}
+
 input {
     width: 100%;
     padding: 10px;

@@ -26,6 +26,21 @@ def login():
         return jsonify({'message': 'Authentication server is unreachable', 'error': str(e)}), 500
 
 
+@app.route('/register', methods=['POST'])
+def register():
+    # Get credentials from the client frontend
+    data = request.get_json()
+    if not data or 'username' not in data or 'password' not in data:
+        return jsonify({'message': 'Username and password are required'}), 400
+
+    # Forward the credentials to the auth server
+    try:
+        auth_response = requests.post(f"{AUTH_SERVER_URL}/register", json=data)
+        # Return the auth server's response to the frontend
+        return jsonify(auth_response.json()), auth_response.status_code
+    except requests.exceptions.RequestException as e:
+        return jsonify({'message': 'Authentication server is unreachable', 'error': str(e)}), 500
+
 @app.route('/changeplayercolor', methods=['POST'])
 def change_player_color():
     try:
@@ -40,7 +55,7 @@ def change_player_color():
         session_id = data.get('session_id')
 
         # Combine RGB into a color dictionary for database storage
-        new_color = {'r': red, 'g': green, 'b': blue}
+        new_color = (red, green, blue)
 
         # Simulated authentication (replace with actual implementation)
         auth_response = requests.post(f"{AUTH_SERVER_URL}/verify", json={'session_id': session_id})

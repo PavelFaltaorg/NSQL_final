@@ -41,6 +41,63 @@ document.getElementById('login-form').addEventListener('submit', async function(
     document.getElementById('login-form').reset();
 });
 
+document.getElementById('show-register').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('register-section').style.display = 'block';
+});
+
+document.getElementById('show-login').addEventListener('click', function (e) {
+    e.preventDefault();
+    document.getElementById('register-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'block';
+});
+
+document.getElementById('register-form').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+    const registerError = document.getElementById('register-error');
+
+    window.electronAPI.sendMessage('Registering user ' + username + ' with password ' + password);
+
+    try {
+        // Send the register request to the backend server
+        const response = await fetch('http://127.0.0.1:8001/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+        });
+
+        // Process the response from the server
+        const data = await response.json();
+
+        if (response.ok) {
+            // Register successful: hide register section and show login section
+            registerError.style.display = 'none';
+            document.getElementById('register-section').style.display = 'none';
+            document.getElementById('login-section').style.display = 'block';
+
+
+        } else {
+            // Register failed: display error message
+            registerError.textContent = data.message || 'Something went wrong. Please try again.';
+            registerError.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error during login:', error);
+        registerError.textContent = 'An error occurred while trying to register. Please try again later.';
+        registerError.style.display = 'block';
+    }
+
+    document.getElementById('register-form').reset();
+
+    document.getElementById('login-error').textContent = 'Registration successful! Please log in.';
+    document.getElementById('login-error').style.display = 'block';
+});
+
 document.getElementById('btn-logout').addEventListener('click', async function() {
     try {
         document.getElementById('game-menu').style.display = 'none';

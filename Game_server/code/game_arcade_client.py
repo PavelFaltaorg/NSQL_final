@@ -21,6 +21,7 @@ import zstandard as zstd
 from collections import deque
 from time import time_ns
 
+
 SERVER_ADDRESS = ('localhost', 12345)
 SEND_UPDATE_INTERVAL = 1 / 60.0
 FPS = 60 

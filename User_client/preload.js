@@ -4,4 +4,5 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   sendMessage: (message) => ipcRenderer.send('message', message),
   onMessage: (callback) => ipcRenderer.on('message', callback),
+  startGame: (session_id) => ipcRenderer.send('start-game', session_id),
 });

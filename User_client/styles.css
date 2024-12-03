@@ -100,3 +100,60 @@ input {
     margin-top: 10px;
     font-size: 0.9em;
 }
+
+#settings-section {
+    display: flex; /* Ensure it's set to flex when visible */
+    flex-direction: column; /* Proper alignment for content */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Fill the parent container */
+    height: 100%; /* Fill the parent container */
+}
+
+#customize-section {
+    display: flex; /* Ensure it's set to flex when visible */
+    flex-direction: column; /* Proper alignment for content */
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Fill the parent container */
+    height: 100%; /* Fill the parent container */
+}
+
+/* Back to Menu Button */
+.back-to-menu-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: auto;
+    padding: 5px 10px;
+}
+
+/* Name Change Container */
+.name-change-container, .color-picker-container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    justify-content: center; /* Center align in the container */
+}
+
+.name-change-container label, .color-picker-container label {
+    margin-right: 10px;
+}
+
+.name-change-container input, .color-picker-container input {
+    flex-grow: 1; /* Allow input to expand */
+    max-width: 200px; /* Limit input width */
+}
+
+.name-change-container button, .color-picker-container button {
+    margin-left: 10px; /* Add spacing between input and button */
+}
+
+.color-picker-container input[type="color"] {
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 50px; /* Adjust size if needed */
+    height: 30px;
+    background: transparent;
+}

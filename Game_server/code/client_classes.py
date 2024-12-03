@@ -1,7 +1,7 @@
 from collections import deque
 from dataclasses import dataclass, field
 from typing import List
-import game_pb2
+import Game_server.code.game_pb2 as game_pb2
 import arcade
 import pymunk
 import imgui

@@ -40,7 +40,7 @@ def change_player_color():
         session_id = data.get('session_id')
 
         # Combine RGB into a color dictionary for database storage
-        new_color = {'r': red, 'g': green, 'b': blue}
+        new_color = (red, green, blue)
 
         # Simulated authentication (replace with actual implementation)
         auth_response = requests.post(f"{AUTH_SERVER_URL}/verify", json={'session_id': session_id})

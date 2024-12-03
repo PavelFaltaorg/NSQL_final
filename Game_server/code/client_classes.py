@@ -42,20 +42,16 @@ class Entity:
     def get_initial_color(self):
         raise NotImplementedError
 
-    def update_position(self, dt: float, fps: int, server_fps: int):#TODO fixnout predelat idk proc to jitteruje furt a nefunguje mrdam na to
+    def update_position(self, dt: float, fps: int, server_fps: int):
         if len(self.positions_buffer) >= 2:
             if not self.shape.visible:
                 self.shape.visible = True
 
-            t0, p0 = self.positions_buffer[0]
-            t1, p1 = self.positions_buffer[1]
+            p0 = self.positions_buffer[0][1]
+            p1 = self.positions_buffer[1][1]
 
             # Calculate frames per update using server_fps, more stable than relying on t1-t0 fluctuations
             frames_per_update = fps / server_fps
-
-            # Calculate the error and log interpolation status
-            error = (p1 - self.position_at_receive)
-            #print(f"interpolation n. {self.inter_time} pblen: {len(self.positions_buffer)} u: {self.u} error: {error.length}, server_fps: {server_fps}")
 
             interpolated_position = arcade.lerp(p0, p1, self.u)
             self.shape.position = interpolated_position
@@ -73,9 +69,9 @@ class Entity:
                     self.positions_buffer.popleft()  # Remove the oldest position
                 else:
                     # Extrapolate if we're waiting for a new packet
-                    #print("Extrapolating\n\n\n")
-                    extrapolated_position = p1 + self.velocity * dt - (error * self.u/2)  # Smoother error compensation
-                    self.shape.position = extrapolated_position
+                    extrapolated_position = p1 + self.velocity * (dt / frames_per_update)  # Smoother error compensation
+                    self.shape.position = arcade.lerp(self.shape.position, extrapolated_position, 0.1)  # Smoothly interpolate to the extrapolated position
+                    self.u = 1  # Cap u to 1 to prevent further extrapolation
 
 
     def update(self, entity_data):
@@ -174,7 +170,6 @@ class PlayerMessage(Message):
         self.color = color
 
     def get_display_lines(self, wrap_width):
-        # Include the player name in the first line
         prefix = f"{self.name}: "
         return super().get_display_lines(wrap_width, prefix)
 
@@ -186,7 +181,7 @@ class Announcement(Message):
 class ChatWindow:
     def __init__(self):
         self.chat_messages = []
-        self.new_chat_message = ""  # The new chat message input field
+        self.new_chat_message = ""
         self.is_hovered = False
         self.old_number_of_messages = 0
         self.string_message_list = deque()
@@ -202,7 +197,7 @@ class ChatWindow:
 
     def draw(self):
         self.is_hovered = False
-        imgui.set_next_window_position(0, 500, imgui.FIRST_USE_EVER)  # Adjust position as needed
+        imgui.set_next_window_position(0, 500, imgui.FIRST_USE_EVER) 
         imgui.begin("Chat", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE)
 
         self.draw_chat_messages()
@@ -217,12 +212,12 @@ class ChatWindow:
         imgui.begin_child("ChatMessages", width=300, height=200, border=True)
         draw_list = imgui.get_window_draw_list()
         message_y = imgui.get_cursor_screen_pos()[1]-7
-        spacing = 8  # Adjust this value to change the space between messages
-        wrap_width = 260  # Fixed wrap width
+        spacing = 8
+        wrap_width = 260
 
         for i, message in enumerate(self.chat_messages):
             lines = message.get_display_lines(wrap_width)
-            message_height = sum(imgui.calc_text_size(line)[1] for line in lines) + 8  # Adjust wrap_width as needed
+            message_height = sum(imgui.calc_text_size(line)[1] for line in lines) + 8
             message_pos = imgui.get_cursor_screen_pos()
             mouse_x, mouse_y = imgui.get_mouse_pos()
             is_hovered = message_pos[0] <= mouse_x <= message_pos[0] + 290 and message_pos[1] <= mouse_y <= message_pos[1] + message_height
@@ -233,7 +228,7 @@ class ChatWindow:
             first_line = True
             for line in lines:
                 text_height = imgui.calc_text_size(line)[1]
-                imgui.set_cursor_screen_pos((message_pos[0], message_y))  # Set cursor position for the text
+                imgui.set_cursor_screen_pos((message_pos[0], message_y))
                 self.draw_message_content(message, line, first_line)
                 first_line = False
                 message_y += text_height
@@ -241,8 +236,8 @@ class ChatWindow:
             if imgui.is_mouse_double_clicked(0):
                 self.check_double_click(message, message_pos, message_y, message_height)
 
-            message_y += spacing  # Move to the next message position, including spacing
-            imgui.set_cursor_screen_pos((message_pos[0], message_y))  # Update cursor position for the next message
+            message_y += spacing  
+            imgui.set_cursor_screen_pos((message_pos[0], message_y))
 
         if imgui.is_window_hovered():
             self.is_hovered = imgui.is_window_hovered()
@@ -253,10 +248,10 @@ class ChatWindow:
         imgui.end_child()
 
     def draw_input_field(self):
-        imgui.push_item_width(300)  # Set custom width for the input text
+        imgui.push_item_width(300)
         if imgui.is_key_pressed(imgui.KEY_ENTER):
             if not imgui.is_item_focused():
-                imgui.set_keyboard_focus_here()  # Set focus to the input text field when Enter is pressed
+                imgui.set_keyboard_focus_here()
         changed, message = imgui.input_text("", self.new_chat_message, 256, imgui.INPUT_TEXT_ENTER_RETURNS_TRUE)
         if changed:
             self.string_message_list.append(message)
@@ -265,17 +260,13 @@ class ChatWindow:
 
     def get_message_color(self, is_hovered, index):
         if is_hovered:
-            return (0.5, 0.5, 0.5, 0.5)  # Highlight color
+            return (0.5, 0.5, 0.5, 0.5)
         else:
-            return (0, 0, 0, 0.2) if index % 2 == 0 else (0, 0, 0, 0.4)  # Alternate colors
+            return (0, 0, 0, 0.2) if index % 2 == 0 else (0, 0, 0, 0.4)
 
     def draw_message_background(self, draw_list, message_pos, message_y, message_height, message_color, index):
         start_mod = 0
         end_mod = 0
-        # if index == 0:
-        #     start_mod = 10
-        # elif index == len(self.chat_messages) - 1:
-        #     end_mod = 10
 
         draw_list.add_rect_filled(message_pos[0] - 10, message_y - start_mod, message_pos[0] + 310, message_y + message_height + end_mod, imgui.get_color_u32_rgba(*message_color))
 
@@ -378,47 +369,39 @@ class GUI:
             player = self.game.players.get(self.game.session_id)
 
             if player:
-                position = player.shape.position  # Assuming player has a position attribute
+                position = player.shape.position
                 draw_list = imgui.get_window_draw_list()
-                # Calculate the position to overlay the text
-                text_pos_x = minimap_pos[0] - 5  # Adjust as needed
-                text_pos_y = minimap_pos[1] + 240  # Adjust as needed
+                text_pos_x = minimap_pos[0] - 5
+                text_pos_y = minimap_pos[1] + 240
                 draw_list.add_text(text_pos_x, text_pos_y, imgui.get_color_u32_rgba(1, 1, 1, 1), f"({position[0]:.0f}, {position[1]:.0f})")
 
             if imgui.is_window_hovered():
                 self.gui_elements_hovered = True
 
-            imgui.end()  # RGBA with alpha 0.5 for transparency
+            imgui.end() 
 
             imgui.set_next_window_position(502, 30, imgui.FIRST_USE_EVER)  # x, y coordinates
 
-            # Begin a new window for the leaderboard
             imgui.begin("Leaderboard", flags=imgui.WINDOW_ALWAYS_AUTO_RESIZE)
 
-            # Display each player's score
             for pos, entry in enumerate(self.game.game_state.leaderboard, 1):
                 if pos == 6:
                     imgui.text(f"...")
                     pos = "6+"
 
-                # Display the position and points in white
                 imgui.text(f"{pos},")
 
-                # Push the entry color for the name
                 imgui.same_line()
                 imgui.push_style_color(imgui.COLOR_TEXT, entry.color.r / 255, entry.color.g / 255, entry.color.b / 255)
                 imgui.text(entry.name)
                 imgui.pop_style_color()
 
-                # Display the points in white
                 imgui.same_line()
                 imgui.text(f": {entry.points}")
 
-            # End the window
             if imgui.is_window_hovered():
                 self.gui_elements_hovered = True
             imgui.end()
-            # RGBA with alpha 0.5 for transparency
 
             self.game.chat.draw()
 
